@@ -87,12 +87,13 @@ while not done and (time.time() - deadline) < DEADLINE_ITERATION:
 # Write results
 print("Sampling ends")
 result_file = "results.csv"
+offset = 0 # If there was other expes done before, just offset to correctly assign the new expes
 with open(result_file, "w") as f:
     f.write("iteration_num,expe_num,validation_result,clock_freq,current_sample,current_timestamp,timing_sample\n")
     for expe_num, samples in enumerate(current_samples):
         for current_sample in samples:
             current, timestamp = current_sample
-            f.write(f"{expe_num//nb_expes},{expe_num%nb_expes},,,{current},{timestamp},\n")
+            f.write(f"{expe_num//nb_expes},{expe_num%nb_expes+offset},,,{current},{timestamp},\n")
     for expe_num, timing_sample in enumerate(timing_samples):
-        f.write(f"{expe_num//nb_expes},{expe_num%nb_expes},,,,,{timing_sample}\n")
+        f.write(f"{expe_num//nb_expes},{expe_num%nb_expes+offset},,,,,{timing_sample}\n")
 print("Done")
