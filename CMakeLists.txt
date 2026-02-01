@@ -7,4 +7,4 @@ set(CMAKE_CXX_STANDARD 17)
 pico_sdk_init()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_subdirectory(powman)
+add_subdirectory(experiments)
