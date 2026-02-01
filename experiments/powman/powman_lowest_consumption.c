@@ -5,6 +5,7 @@
 #include "hardware/clocks.h"
 #include "hardware/structs/usb.h"
 #include "hardware/powman.h"
+#include "hardware/vreg.h"
 // For wfi
 #include "hardware/sync.h"
 #include "pico/runtime_init.h"
@@ -99,8 +100,12 @@ int main() {
 			return 0;
 	}
 	debug_printf("Going in P1 state");
+	vreg_disable_voltage_limit();
+	powman_clear_bits(&powman_hw->bod, 0x000001f1);
+	vreg_set_voltage(VREG_VOLTAGE_0_70); // Change value
 	gpio_put(expe_pin, 1);
 	__wfi();
+	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 	debug_printf("Should never reach here\n");
 	return 0; // Should never reach here
 }
