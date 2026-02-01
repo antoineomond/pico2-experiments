@@ -1,9 +1,10 @@
+# Must be running from the monitoring device 
 import sys
 import time
 import board
 import adafruit_ina228
 import pigpio
-from statistics import mean, stdev, median
+from statistics import StatisticsError, mean, stdev, median
 
 DEADLINE_ITERATION = 300
 EXPE_PIN = 27
@@ -16,11 +17,12 @@ deadline = time.time()
 start_time = time.time()
 timing_samples = []
 
-if(len(sys.argv) < 1 or not isinstance(sys.argv[0], int)):
-    print("Precise number of experiments (int)")
+if(len(sys.argv) < 3):
+    print("Precise number of experiments and iterations per experiment (int)")
     exit()
-nb_expes = int(sys.argv[0])
-live = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+nb_expes = int(sys.argv[1])
+nb_iter = int(sys.argv[2])
+live = int(sys.argv[3]) if len(sys.argv) > 3 else 0
 
 def next_expe(user_gpio, level, tick):
     global init
@@ -42,7 +44,7 @@ def next_expe(user_gpio, level, tick):
         timing_samples.append(t)
         started = 0
         expe_num += 1
-        if(expe_num >= nb_expes):
+        if(expe_num >= nb_expes*nb_iter):
              done = 1
         print(expe_num)
 
@@ -67,25 +69,30 @@ if not pi.connected:
     print("pigpiod need to run in background")
     exit(0)
 pi.callback(EXPE_PIN, pigpio.EITHER_EDGE, next_expe)
-current_samples = [[] for _ in range(nb_expes)]
+current_samples = [[] for _ in range(nb_expes*nb_iter)]
+live_samples = [[] for _ in range(nb_expes*nb_iter)]
 print("Sampling starts")
 while not done and (time.time() - deadline) < DEADLINE_ITERATION:
     val = ina228.current*1000
     if started:  # only measure current when expe starts 
-        current_samples[expe_num].append((val, round(time.time()-start_time, 2)))
-    if live:
-        if len(current_samples[expe_num])>2:
-            print(f"{val:.3f}, mean: {mean(current_samples[expe_num]):.3f}, std: {stdev(current_samples[expe_num]):.3f}, median: {median(current_samples[expe_num]):.3f}, max: {max(current_samples[expe_num]):.3f}, min: {min(current_samples[expe_num]):.3f}")
-    time.sleep(0.0050) # >100Hz sampling (getting current is <0.0050s). 
+        current_samples[expe_num].append((val, round(time.time()-start_time, 3)))
+        if live:
+            live_samples[expe_num].append(val)
+            try:
+                print(f"{val:.3f}, mean: {mean(live_samples[expe_num]):.3f}, std: {stdev(live_samples[expe_num]):.3f}, median: {median(live_samples[expe_num]):.3f}, max: {max(live_samples[expe_num]):.3f}, min: {min(live_samples[expe_num]):.3f}")
+            except StatisticsError:
+                pass
+    time.sleep(0.025) # 40Hz sampling 
 
 # Write results
 print("Sampling ends")
 result_file = "results.csv"
 with open(result_file, "w") as f:
-    f.write("expe_num,current_sample,timing_sample\n")
+    f.write("iteration_num,expe_num,validation_result,clock_freq,current_sample,current_timestamp,timing_sample\n")
     for expe_num, samples in enumerate(current_samples):
         for current_sample in samples:
-            f.write(f"{expe_num},{current_sample},\n")
+            current, timestamp = current_sample
+            f.write(f"{expe_num//nb_expes},{expe_num%nb_expes},,,{current},{timestamp},\n")
     for expe_num, timing_sample in enumerate(timing_samples):
-        f.write(f"{expe_num},,{timing_sample}\n")
+        f.write(f"{expe_num//nb_expes},{expe_num%nb_expes},,,,,{timing_sample}\n")
 print("Done")
