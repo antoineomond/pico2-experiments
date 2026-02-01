@@ -33,11 +33,12 @@ def next_expe(user_gpio, level, tick):
     global deadline
     global start_time
     if(level == 1):
+        if(init == 0):
+            start_time = time.time() 
         init = 1
         started = 1
         deadline = time.time()
         s = tick
-        start_time = time.time() 
     if(init == 1 and level == 0):
         t = tick-s
         # tick is 32 bit timer that wraps around from 4294967295 to 0 if overflow, the following condition handles that case 
