@@ -31,11 +31,13 @@ def next_expe(user_gpio, level, tick):
     global done
     global s
     global deadline
+    global start_time
     if(level == 1):
         init = 1
         started = 1
         deadline = time.time()
         s = tick
+        start_time = time.time() 
     if(init == 1 and level == 0):
         t = tick-s
         # tick is 32 bit timer that wraps around from 4294967295 to 0 if overflow, the following condition handles that case 
@@ -80,7 +82,10 @@ while not done and (time.time() - deadline) < DEADLINE_ITERATION:
             live_samples[expe_num].append(val)
             try:
                 print(f"{val:.3f}, mean: {mean(live_samples[expe_num]):.3f}, std: {stdev(live_samples[expe_num]):.3f}, median: {median(live_samples[expe_num]):.3f}, max: {max(live_samples[expe_num]):.3f}, min: {min(live_samples[expe_num]):.3f}")
+            # Empty array not accepted in statistics functions
             except StatisticsError:
+                pass
+            except ValueError:
                 pass
     time.sleep(0.025) # 40Hz sampling 
 
