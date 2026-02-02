@@ -2,26 +2,28 @@ library("ggplot2")
 library("dplyr")
 library(rlang)
 
-df <- read.csv("lposc_benchmarks.csv")
-df <- df %>%
-  mutate(
-    x_range = cut(
-      expe_num,
-      breaks = c(0, 15, 30),   # upper bound is exclusive by default
-      right = FALSE,              # [0,15), [15,30), ...
-      labels = c("0–14", "15–29")
-    )
-  )
+results_name <- "rosc_benchmarks_div1"
+titles <- list(
+	"rosc_benchmarks_div1" = "Rosc benchmarks, divider: 1",
+	"rosc_benchmarks_div10" = "Rosc benchmarks, divider: 10",
+	"rosc_benchmarks_div20" = "Rosc benchmarks, divider: 20",
+	"rosc_benchmarks_div30" = "Rosc benchmarks, divider: 30"
+)
+limits <- list(
+	"rosc_benchmarks_div1" = c(1, 10),
+	"rosc_benchmarks_div10" = c(2, 3.5),
+	"rosc_benchmarks_div20" = c(1.5, 3.5),
+	"rosc_benchmarks_div30" = c(1, 3)
+)
+
+df <- read.csv(paste(results_name, ".csv", sep=""))
+df <- df %>% filter(iteration_num == 0)
 p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=factor(expe_num), group=factor(expe_num))) +
 	geom_line(na.rm = TRUE) +
-	scale_y_continuous(limits=c(0.4, 1.4), n.breaks=15) +
-	geom_hline(yintercept = median(df[df$expe_num == 0,]$current_sample, na.rm = TRUE), color = "red") +
-	geom_hline(yintercept = median(df[df$expe_num == 5,]$current_sample, na.rm = TRUE), color = "red") +
-	geom_hline(yintercept = median(df[df$expe_num == 10,]$current_sample, na.rm = TRUE), color = "red") +
-	facet_wrap(~ x_range) +
-	labs(title = "lposc benchmarks", x = "Timestamp in seconds", y = "Current sample in mA") +
+	scale_y_continuous(limits=limits[[results_name]], n.breaks=15) +
+	labs(title = titles[[results_name]], x = "Timestamp in seconds", y = "Current sample in mA") +
 	scale_color_manual(
-	 name = "Dormant source", 
+	 name = "Benchmarks", 
 	 labels = c(
 			"prime", "prime_multicore", "mat_mul", "mat_mul_float", "mat_mul_double",
 			"prime (0.9V)", "prime_multicore (0.9V)", "mat_mul (0.9V)", "mat_mul_float (0.9V)", "mat_mul_double (0.9V)",
@@ -31,12 +33,12 @@ p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=factor(expe
 			"prime (trimmed, 0.75V)", "prime_multicore (trimmed, 0.75V)", "mat_mul (trimmed, 0.75V)", "mat_mul_float (trimmed, 0.75V)", "mat_mul_double (trimmed, 0.75V)"
 		),
 	 values = c(
-			"black", "black", "black", "black", "black",
-			"purple", "purple", "purple", "purple", "purple",
-			"dark grey", "dark grey", "dark grey", "dark grey", "dark grey",
+			"black", "purple", "dark grey", "blue", "brown",
+			"green", "green", "green", "green", "green",
+			"yellow", "yellow", "yellow", "yellow", "yellow",
 			"blue", "blue", "blue", "blue", "blue",
 			"brown", "brown", "brown", "brown", "brown",
 			"grey", "grey", "grey", "grey", "grey"
 		))
-ggsave("lposc_benchmarks.pdf", plot=p)
+ggsave(paste(results_name, ".pdf", sep=""), plot=p)
 

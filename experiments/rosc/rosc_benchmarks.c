@@ -33,7 +33,7 @@
 const int expe_pin = 11;
 const uint32_t RESET_VAL = 0xDEADBEEF; 
 float TIME_RATE = 1;
-const uint NB_ITERATIONS_MAT_MUL = 1;
+const uint NB_ITERATIONS_MAT_MUL = 1000;
 
 void pull_down_gpios() {
 	const uint used_gpios[] = {expe_pin};
@@ -246,6 +246,21 @@ uint benchmark_prime_multicores(uint benchmark_size) {
 	return cpt_core0 + cpt_core1;
 }
 
+void leverage_clock_source_rosc() {
+	rosc_enable();
+	xosc_init();
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+	restart_all_ticks();
+	uint rosc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC_PH);
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, rosc_freq);
+	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_ROSC_CLKSRC, rosc_freq);
+	clock_configure(clk_peri, 0, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS, rosc_freq, rosc_freq);
+	restart_all_ticks();
+	pll_deinit(pll_sys);
+	pll_deinit(pll_usb);
+	xosc_disable();
+}
+
 int main() {
 	// Set on/off pin to toggle experiments (also puts the expe_pin to 0)
 	// Inspired from https://github.com/peterharperuk/pico-examples/commit/7dccd00d15ded4ddf961f44fdcd1f11a9d8c8be1
@@ -271,8 +286,7 @@ int main() {
 	disable_usb();
 	#endif
 
-	// Dormant source: LPOSC
-	leverage_clock_source_lposc();
+	leverage_clock_source_rosc();
 	clock_stop(clk_adc);
 	clock_stop(clk_usb);
 	clock_stop(clk_hstx);
@@ -287,41 +301,43 @@ int main() {
 	restart_all_ticks();
 	
 	// Setup voltage and trimming
-	powman_clear_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS);
-	powman_set_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS & 0x3f0);
-	uint lposc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_LPOSC_CLKSRC)*KHZ;
-	TIME_RATE = ((float)lposc_freq)/((float)1*MHZ);
-	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_LPOSC_CLKSRC, 0, lposc_freq);
+	rosc_set_div(1);
+	rosc_set_range(1);
+	rosc_set_freq(0);
+	uint rosc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC)*KHZ;
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, rosc_freq);
 	restart_all_ticks();
 	xosc_disable();
 	
-	clock_set_reported_hz(clk_ref, lposc_freq);
-	clock_set_reported_hz(clk_sys, lposc_freq);
+	clock_set_reported_hz(clk_ref, rosc_freq);
+	clock_set_reported_hz(clk_sys, rosc_freq);
 	
 	uint benchmark_result;
 	gpio_put(expe_pin, 1);
-	benchmark_result = benchmark_prime(200); // Uses one CPU core
+	benchmark_result = benchmark_prime(10000); // Uses one CPU core
 	gpio_put(expe_pin, 0);
 	validation_printf(",10,%d,%d,,,", benchmark_result, lposc_freq);
-	sleep_us((int)(100000*TIME_RATE));
+	sleep_us((int)(1000000*TIME_RATE));
 	gpio_put(expe_pin, 1);
-	benchmark_result = benchmark_prime_multicores(200); // Uses both cores
+	benchmark_result = benchmark_prime_multicores(10000); // Uses both cores
 	gpio_put(expe_pin, 0);
 	validation_printf(",11,%d,%d,,,", benchmark_result, lposc_freq);
-	sleep_us((int)(100000*TIME_RATE));
+	sleep_us((int)(1000000*TIME_RATE));
 	gpio_put(expe_pin, 1);
 	benchmark_result = benchmark_mat_mul(72); // Uses RAM
 	gpio_put(expe_pin, 0);
 	validation_printf(",12,%d,%d,,,", benchmark_result, lposc_freq);
-	sleep_us((int)(100000*TIME_RATE));
+	sleep_us((int)(1000000*TIME_RATE));
 	gpio_put(expe_pin, 1);
 	float benchmark_result_float = benchmark_mat_mul_float(72); // Uses float co-processor
 	gpio_put(expe_pin, 0);
 	validation_printf(",13,%.15f,%d,,,", benchmark_result_float, lposc_freq);
+	sleep_us((int)(1000000*TIME_RATE));
 	gpio_put(expe_pin, 1);
 	double benchmark_result_double = benchmark_mat_mul_double(36); // Uses double co-processor
 	gpio_put(expe_pin, 0);
 	validation_printf(",14,%.15f,%d,,,", benchmark_result_double, lposc_freq);
+	sleep_us((int)(1000000*TIME_RATE));
 	
 	vreg_set_voltage(VREG_VOLTAGE_DEFAULT); // Change value
 	// End of iteration, reset the board
