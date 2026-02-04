@@ -9,34 +9,33 @@ df <- df %>%
       expe_num,
       breaks = c(0, 15, 30),   # upper bound is exclusive by default
       right = FALSE,              # [0,15), [15,30), ...
-      labels = c("0–14", "15–29")
+      labels = c("non trimmed", "trimmed")
     )
   )
-p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=factor(expe_num), group=factor(expe_num))) +
+df <- df %>%
+  mutate(
+    legend_group = case_when(
+      expe_num %in% c(0:4, 20:24)   ~ "1.1V (default)",
+      expe_num %in% c(5:9, 15:19)   ~ "0.9V",
+      expe_num %in% c(10:14, 25:29) ~ "0.75V"
+    )
+  )
+df <- df %>% filter(iteration_num == 0)
+p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=legend_group, group=factor(expe_num))) +
 	geom_line(na.rm = TRUE) +
 	scale_y_continuous(limits=c(0.4, 1.4), n.breaks=15) +
 	geom_hline(yintercept = median(df[df$expe_num == 0,]$current_sample, na.rm = TRUE), color = "red") +
 	geom_hline(yintercept = median(df[df$expe_num == 5,]$current_sample, na.rm = TRUE), color = "red") +
 	geom_hline(yintercept = median(df[df$expe_num == 10,]$current_sample, na.rm = TRUE), color = "red") +
 	facet_wrap(~ x_range) +
-	labs(title = "lposc benchmarks", x = "Timestamp in seconds", y = "Current sample in mA") +
-	scale_color_manual(
-	 name = "Dormant source", 
-	 labels = c(
-			"prime", "prime_multicore", "mat_mul", "mat_mul_float", "mat_mul_double",
-			"prime (0.9V)", "prime_multicore (0.9V)", "mat_mul (0.9V)", "mat_mul_float (0.9V)", "mat_mul_double (0.9V)",
-			"prime (0.75V)", "prime_multicore (0.75V)", "mat_mul (0.75V)", "mat_mul_float (0.75V)", "mat_mul_double (0.75V)",
-			"prime (trimmed, 0.9V)", "prime_multicore (trimmed, 0.9V)", "mat_mul (trimmed, 0.9V)", "mat_mul_float (trimmed, 0.9V)", "mat_mul_double (trimmed, 0.9V)",
-			"prime (trimmed)", "prime_multicore (trimmed)", "mat_mul (trimmed)", "mat_mul_float (trimmed)", "mat_mul_double (trimmed)",
-			"prime (trimmed, 0.75V)", "prime_multicore (trimmed, 0.75V)", "mat_mul (trimmed, 0.75V)", "mat_mul_float (trimmed, 0.75V)", "mat_mul_double (trimmed, 0.75V)"
-		),
-	 values = c(
-			"black", "black", "black", "black", "black",
-			"purple", "purple", "purple", "purple", "purple",
-			"dark grey", "dark grey", "dark grey", "dark grey", "dark grey",
-			"blue", "blue", "blue", "blue", "blue",
-			"brown", "brown", "brown", "brown", "brown",
-			"grey", "grey", "grey", "grey", "grey"
-		))
+	labs(title = "Running all 5 benchmarks one after the other (prime, prime multicore, \nmat mul int, mat mul float, mat mul double)", x = "Timestamp in seconds", y = "Current sample in mA") +
+  scale_color_manual(
+		name = "Configuration",
+    values = c(
+      "1.1V (default)"      = "black",
+      "0.9V"                = "purple",
+      "0.75V"               = "darkgrey"
+    )
+  )
 ggsave("lposc_benchmarks.pdf", plot=p)
 
