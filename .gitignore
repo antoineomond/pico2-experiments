@@ -3,3 +3,4 @@ openocd/
 .cache/
 validation.csv
 rpi4_mountpoint/
+execute_expe.sh
