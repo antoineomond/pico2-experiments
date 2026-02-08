@@ -8,7 +8,9 @@ target_link_libraries(lposc_benchmarks
 				hardware_vreg
 				pico_multicore
 				pico_rand
-				hardware_sleep)
+				hardware_sleep
+				experiments
+			)
 pico_enable_stdio_usb(lposc_benchmarks 0)
 pico_enable_stdio_uart(lposc_benchmarks 1)
 pico_add_extra_outputs(lposc_benchmarks)
