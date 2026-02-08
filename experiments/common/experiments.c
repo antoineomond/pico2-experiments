@@ -1,6 +1,7 @@
 #include "experiments.h"
 #include "pico/stdlib.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include "pico/multicore.h"
 #include "hardware/clocks.h"
 #include "hardware/structs/usb.h"
@@ -8,9 +9,78 @@
 #include "hardware/pll.h"
 #include "hardware/xosc.h"
 #include "hardware/rosc.h"
+#include "hardware/watchdog.h"
+#include "hardware/vreg.h"
+#include "hardware/powman.h"
 
-const uint NB_ITERATIONS_MAT_MUL = 1;
+const uint32_t RESET_VAL = 0xDEADBEEF; 
+const int expe_pin = 11;
 extern float TIME_RATE;
+
+uint benchmark_result_prime;
+uint benchmark_result_multicores;
+uint8_t benchmark_result_mat_mul;
+uint8_t benchmark_result_mat_mul_float;
+uint8_t benchmark_result_mat_mul_double;
+
+void iteration_init() {
+	// Set pin to toggle experiments (also puts it to low)
+	sleep_ms(100); // For unknown reason, not sleeping here make firmware upload using SWD to fail
+	gpio_init(expe_pin);
+	gpio_set_dir(expe_pin, GPIO_OUT);
+	
+	#if VALIDATION_RUN
+	if(watchdog_hw->scratch[0] != RESET_VAL) {
+		watchdog_hw->scratch[1] = 0;
+	}
+	#else
+	if(watchdog_hw->scratch[0] != RESET_VAL) {
+		// Leave 10sec window to unplug the SWD before resetting the board (required because the SWD sub-system doesn't deactivate automatically once SWD is unplugged (3.5.1. of datasheet))
+		sleep_ms(10000); 
+		// Scratch values survive between reboots between reboots
+		watchdog_hw->scratch[0] = RESET_VAL;
+		watchdog_reboot(0, 0, 0);
+	}
+	pull_down_gpios();
+	turn_off_clocks();
+	disable_usb();
+	#endif
+	vreg_disable_voltage_limit();
+	powman_clear_bits(&powman_hw->bod, 0x000001f1);
+}
+
+void iteration_end(const char* expe_params, uint clock_freq) {
+	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
+	
+	#if !VALIDATION_RUN
+	// Reinit the PLLs to print results
+	xosc_init();
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+	restart_all_ticks();
+	pll_init(pll_sys, PLL_SYS_REFDIV, PLL_SYS_VCO_FREQ_HZ, PLL_SYS_POSTDIV1, PLL_SYS_POSTDIV2);
+	pll_init(pll_usb, PLL_USB_REFDIV, PLL_USB_VCO_FREQ_HZ, PLL_USB_POSTDIV1, PLL_USB_POSTDIV2);
+	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, SYS_CLK_HZ);
+	clock_configure_undivided(clk_peri,
+									0,
+									CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS,
+									SYS_CLK_HZ);
+	
+	stdio_init_all();
+	sleep_ms(1000);
+	
+	uint iteration_num = watchdog_hw->scratch[1];
+	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "prime", benchmark_result_prime, clock_freq);
+	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "prime_multicores", benchmark_result_multicores, clock_freq);
+	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "mat_mul", benchmark_result_mat_mul, clock_freq);
+	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "mat_mul_float", benchmark_result_mat_mul_float, clock_freq);
+	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "mat_mul_double", benchmark_result_mat_mul_double, clock_freq);
+	watchdog_hw->scratch[1] += 1;
+	#endif
+	
+	// End of iteration, reset the board
+	watchdog_hw->scratch[0] = RESET_VAL;
+	watchdog_reboot(0, 0, 0);
+}
 
 uint compute_primes(uint start, uint end) {
 	volatile uint cpt = 0;
@@ -59,11 +129,11 @@ uint8_t benchmark_prime_multicores(uint benchmark_size) {
 	return correct;
 }
 
-uint8_t benchmark_mat_mul(unsigned int benchmark_size) {
+uint8_t benchmark_mat_mul(uint benchmark_size, uint nb_iteration_mat_mul) {
 	uint32_t A_value = 1UL<<16;
 	uint32_t B_value = 1UL<<16;
 	volatile uint8_t correct = 1;
-	for (int k = 0; k < NB_ITERATIONS_MAT_MUL; k++) {
+	for (int k = 0; k < nb_iteration_mat_mul; k++) {
 		// Three 32-bits matrixes of 72 elements account for 486 kB, which should account for all 8 memory banks in SRAM0 and SRAM1
 		uint32_t *A = malloc(sizeof(uint32_t)*benchmark_size*benchmark_size);
 		uint32_t *B = malloc(sizeof(uint32_t)*benchmark_size*benchmark_size);
@@ -88,11 +158,11 @@ uint8_t benchmark_mat_mul(unsigned int benchmark_size) {
 	return correct;
 }
 
-uint8_t benchmark_mat_mul_float(unsigned int benchmark_size) {
+uint8_t benchmark_mat_mul_float(uint benchmark_size, uint nb_iteration_mat_mul) {
 	float A_value = 1.23456789;
 	float B_value = 1.23456789;
 	volatile uint8_t correct = 1;
-	for (int k = 0; k < NB_ITERATIONS_MAT_MUL; k++) {
+	for (int k = 0; k < nb_iteration_mat_mul; k++) {
 		// Three 32-bits matrixes of 72 elements account for 486 kB, which should account for all 8 memory banks in SRAM0 and SRAM1
 		float *A = malloc(sizeof(float)*benchmark_size*benchmark_size);
 		float *B = malloc(sizeof(float)*benchmark_size*benchmark_size);
@@ -117,11 +187,11 @@ uint8_t benchmark_mat_mul_float(unsigned int benchmark_size) {
 	return correct;
 }
 
-uint8_t benchmark_mat_mul_double(unsigned int benchmark_size) {
+uint8_t benchmark_mat_mul_double(uint benchmark_size, uint nb_iteration_mat_mul) {
 	double A_value = 1.23456789;
 	double B_value = 1.23456789;
 	volatile uint8_t correct = 1;
-	for (int k = 0; k < NB_ITERATIONS_MAT_MUL; k++) {
+	for (int k = 0; k < nb_iteration_mat_mul; k++) {
 		// Three 32-bits matrixes of 72 elements account for 486 kB, which should account for all 8 memory banks in SRAM0 and SRAM1
 		double *A = malloc(sizeof(double)*benchmark_size*benchmark_size);
 		double *B = malloc(sizeof(double)*benchmark_size*benchmark_size);
@@ -146,7 +216,7 @@ uint8_t benchmark_mat_mul_double(unsigned int benchmark_size) {
 	return correct;
 }
 
-void pull_down_gpios(uint expe_pin) {
+void pull_down_gpios() {
 	for (int gpio = 0; gpio < NUM_BANK0_GPIOS; gpio++) {
 		if(!expe_pin) {
 			gpio_set_dir(gpio, 0);
@@ -239,4 +309,25 @@ void leverage_clock_source_lposc() {
 	pll_deinit(pll_usb);
 	rosc_disable();
 	xosc_disable();
+}
+
+void execute_benchmarks(uint bench_prime_size, uint bench_multi_size, uint bench_mat_size, uint bench_mat_float_size, uint bench_mat_double_size, uint nb_iteration_mat_mul) {
+	gpio_put(expe_pin, 1);
+	benchmark_result_prime = benchmark_prime(bench_prime_size); // Uses one CPU core
+	gpio_put(expe_pin, 0);
+	sleep_us((int)(100000*TIME_RATE));
+	gpio_put(expe_pin, 1);
+	benchmark_result_multicores = benchmark_prime_multicores(bench_multi_size); // Uses both cores
+	gpio_put(expe_pin, 0);
+	sleep_us((int)(100000*TIME_RATE));
+	gpio_put(expe_pin, 1);
+	benchmark_result_mat_mul = benchmark_mat_mul(bench_mat_size, nb_iteration_mat_mul); // Uses RAM
+	gpio_put(expe_pin, 0);
+	sleep_us((int)(100000*TIME_RATE));
+	gpio_put(expe_pin, 1);
+	benchmark_result_mat_mul_float = benchmark_mat_mul_float(bench_mat_float_size, nb_iteration_mat_mul); // Uses float co-processor
+	gpio_put(expe_pin, 0);
+	gpio_put(expe_pin, 1);
+	benchmark_result_mat_mul_double = benchmark_mat_mul_double(bench_mat_double_size, nb_iteration_mat_mul); // Uses double co-processor
+	gpio_put(expe_pin, 0);
 }

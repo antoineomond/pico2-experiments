@@ -22,47 +22,21 @@
 #define TARGET_VOLTAGE VREG_VOLTAGE_0_75
 #define TARGET_LPOSC_TRIM 0x3f0
 
-const int expe_pin = 11;
-const uint32_t RESET_VAL = 0xDEADBEEF; 
+#define BENCH_PRIME_SIZE 200
+#define BENCH_MULTI_SIZE 200
+#define BENCH_MAT_SIZE 72
+#define BENCH_MAT_FLOAT_SIZE 72
+#define BENCH_MAT_DOUBLE_SIZE 36
+#define NB_ITERATIONS_MAT_MUL 1
+
+extern const int expe_pin;
 float TIME_RATE = 1;
 volatile uint32_t iteration_num = 0;
 
 int main() {
 	// Inspired from https://github.com/peterharperuk/pico-examples/commit/7dccd00d15ded4ddf961f44fdcd1f11a9d8c8be1
-	// Set pin to toggle experiments (also puts it to low)
-	sleep_ms(100); // For unknown reason, not sleeping here make firmware upload using SWD to fail
-	gpio_init(expe_pin);
-	gpio_set_dir(expe_pin, GPIO_OUT);
-	
-	#if VALIDATION_RUN
-	if(watchdog_hw->scratch[0] != RESET_VAL) {
-		watchdog_hw->scratch[1] = 0;
-	}
-	#else
-	if(watchdog_hw->scratch[0] != RESET_VAL) {
-		// Leave 10sec window to unplug the SWD before resetting the board (required because the SWD sub-system doesn't deactivate automatically once SWD is unplugged (3.5.1. of datasheet))
-		sleep_ms(10000); 
-		// Scratch values survive between reboots between reboots
-		watchdog_hw->scratch[0] = RESET_VAL;
-		watchdog_reboot(0, 0, 0);
-	}
-	pull_down_gpios();
-	turn_off_clocks();
-	disable_usb();
-	#endif
-
-	// Dormant source: LPOSC
+	iteration_init();
 	leverage_clock_source_lposc();
-	vreg_disable_voltage_limit();
-	powman_clear_bits(&powman_hw->bod, 0x000001f1);
-	#if !VALIDATION_RUN
-	clock_stop(clk_adc);
-	clock_stop(clk_usb);
-	clock_stop(clk_hstx);
-	setup_default_uart();
-	stdio_flush();
-	processor_deep_sleep();
-	#endif
 	
 	// Setup voltage and trimming
 	vreg_set_voltage(TARGET_VOLTAGE);
@@ -85,54 +59,13 @@ int main() {
 	clock_set_reported_hz(clk_ref, lposc_freq);
 	clock_set_reported_hz(clk_sys, lposc_freq);
 	
-	gpio_put(expe_pin, 1);
-	uint benchmark_result_prime = benchmark_prime(200); // Uses one CPU core
-	gpio_put(expe_pin, 0);
-	sleep_us((int)(100000*TIME_RATE));
-	gpio_put(expe_pin, 1);
-	uint benchmark_result_multicores = benchmark_prime_multicores(200); // Uses both cores
-	gpio_put(expe_pin, 0);
-	sleep_us((int)(100000*TIME_RATE));
-	gpio_put(expe_pin, 1);
-	uint8_t benchmark_result_mat_mul = benchmark_mat_mul(72); // Uses RAM
-	gpio_put(expe_pin, 0);
-	sleep_us((int)(100000*TIME_RATE));
-	gpio_put(expe_pin, 1);
-	uint8_t benchmark_result_mat_mul_float = benchmark_mat_mul_float(72); // Uses float co-processor
-	gpio_put(expe_pin, 0);
-	gpio_put(expe_pin, 1);
-	uint8_t benchmark_result_mat_mul_double = benchmark_mat_mul_double(36); // Uses double co-processor
-	gpio_put(expe_pin, 0);
+	execute_benchmarks(BENCH_PRIME_SIZE, BENCH_MULTI_SIZE, BENCH_MAT_SIZE, BENCH_MAT_FLOAT_SIZE, BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL);
 	
-	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
+	// clock_source,vreg,lposc_trim,rosc_div,rosc_range,rosc_freqa,rosc_freqb,pll_vco,pll_div
+	char buf[100];
+	sprintf(buf, "rosc,%.2d,%.3x,,,,,,", TARGET_VOLTAGE, TARGET_LPOSC_TRIM);
 	
-	#if VALIDATION_RUN
-	// Reinit the PLLs to print results
-	xosc_init();
-	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
-	restart_all_ticks();
-	pll_init(pll_sys, PLL_SYS_REFDIV, PLL_SYS_VCO_FREQ_HZ, PLL_SYS_POSTDIV1, PLL_SYS_POSTDIV2);
-	pll_init(pll_usb, PLL_USB_REFDIV, PLL_USB_VCO_FREQ_HZ, PLL_USB_POSTDIV1, PLL_USB_POSTDIV2);
-	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, SYS_CLK_HZ);
-	clock_configure_undivided(clk_peri,
-									0,
-									CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS,
-									SYS_CLK_HZ);
+	iteration_end(buf, lposc_freq);
 	
-	stdio_init_all();
-	sleep_ms(1000);
-	
-	uint iteration_num = watchdog_hw->scratch[1];
-	printf("%d,%d,%d,%d,,,\n", iteration_num, EXPE_NUM_OFFSET, benchmark_result_prime, lposc_freq);
-	printf("%d,%d,%d,%d,,,\n", iteration_num, EXPE_NUM_OFFSET+1, benchmark_result_multicores, lposc_freq);
-	printf("%d,%d,%d,%d,,,\n", iteration_num, EXPE_NUM_OFFSET+2, benchmark_result_mat_mul, lposc_freq);
-	printf("%d,%d,%d,%d,,,\n", iteration_num, EXPE_NUM_OFFSET+3, benchmark_result_mat_mul_float, lposc_freq);
-	printf("%d,%d,%d,%d,,,\n", iteration_num, EXPE_NUM_OFFSET+4, benchmark_result_mat_mul_double, lposc_freq);
-	watchdog_hw->scratch[1] += 1;
-	#endif
-	
-	// End of iteration, reset the board
-	watchdog_hw->scratch[0] = RESET_VAL;
-	watchdog_reboot(0, 0, 0);
 	return 0; // Should never reach here
 }
