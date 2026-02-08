@@ -16,9 +16,11 @@
 #include "pico/runtime_init.h"
 
 #define VALIDATION_RUN 1
+#define EXPE_NUM_OFFSET 25
+
+// Experiment parameters
 #define TARGET_VOLTAGE VREG_VOLTAGE_0_75
 #define TARGET_LPOSC_TRIM 0x3f0
-#define EXPE_NUM_OFFSET 25
 
 const int expe_pin = 11;
 const uint32_t RESET_VAL = 0xDEADBEEF; 
@@ -51,26 +53,31 @@ int main() {
 
 	// Dormant source: LPOSC
 	leverage_clock_source_lposc();
+	vreg_disable_voltage_limit();
+	powman_clear_bits(&powman_hw->bod, 0x000001f1);
 	#if !VALIDATION_RUN
 	clock_stop(clk_adc);
 	clock_stop(clk_usb);
 	clock_stop(clk_hstx);
 	setup_default_uart();
 	stdio_flush();
-	#endif
 	processor_deep_sleep();
-	vreg_disable_voltage_limit();
-	powman_clear_bits(&powman_hw->bod, 0x000001f1);
-	vreg_set_voltage(TARGET_VOLTAGE); // Change value
+	#endif
+	
+	// Setup voltage and trimming
+	vreg_set_voltage(TARGET_VOLTAGE);
+	powman_clear_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS);
+	powman_set_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS & TARGET_LPOSC_TRIM);
+
+	// Count lposc freq
+	// Make clk_ref have a stable clock to count frequency  
 	xosc_init();
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
 	restart_all_ticks();
-	
-	// Setup voltage and trimming
-	powman_clear_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS);
-	powman_set_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS & TARGET_LPOSC_TRIM);
 	uint lposc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_LPOSC_CLKSRC)*KHZ;
-	TIME_RATE = ((float)lposc_freq)/((float)1*MHZ);
+	TIME_RATE = ((float)lposc_freq)/((float)1*MHZ); // Adjust TIME_RATE to account the very slow freq of lposc
+
+	// Make lposc as clk_ref, then disable XOSC as it is no longer needed
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_LPOSC_CLKSRC, 0, lposc_freq);
 	restart_all_ticks();
 	xosc_disable();
@@ -97,13 +104,12 @@ int main() {
 	uint8_t benchmark_result_mat_mul_double = benchmark_mat_mul_double(36); // Uses double co-processor
 	gpio_put(expe_pin, 0);
 	
-	vreg_set_voltage(VREG_VOLTAGE_DEFAULT); // Change value
+	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 	
 	#if VALIDATION_RUN
+	// Reinit the PLLs to print results
 	xosc_init();
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
-	pll_deinit(pll_sys);
-	pll_deinit(pll_usb);
 	restart_all_ticks();
 	pll_init(pll_sys, PLL_SYS_REFDIV, PLL_SYS_VCO_FREQ_HZ, PLL_SYS_POSTDIV1, PLL_SYS_POSTDIV2);
 	pll_init(pll_usb, PLL_USB_REFDIV, PLL_USB_VCO_FREQ_HZ, PLL_USB_POSTDIV1, PLL_USB_POSTDIV2);
