@@ -13,6 +13,7 @@
 #include "hardware/vreg.h"
 #include "hardware/powman.h"
 
+const uint US = 1000000;
 const uint32_t RESET_VAL = 0xDEADBEEF; 
 const int expe_pin = 11;
 extern float TIME_RATE;
@@ -69,6 +70,7 @@ void iteration_end(const char* expe_params, uint clock_freq) {
 	sleep_ms(1000);
 	
 	uint iteration_num = watchdog_hw->scratch[1];
+	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "noop", 1, clock_freq);
 	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "prime", benchmark_result_prime, clock_freq);
 	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "prime_multicores", benchmark_result_multicores, clock_freq);
 	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "mat_mul", benchmark_result_mat_mul, clock_freq);
@@ -80,6 +82,10 @@ void iteration_end(const char* expe_params, uint clock_freq) {
 	// End of iteration, reset the board
 	watchdog_hw->scratch[0] = RESET_VAL;
 	watchdog_reboot(0, 0, 0);
+}
+
+uint8_t benchmark_noop(uint benchmark_size) {
+	sleep_us((int)(benchmark_size*US*TIME_RATE));
 }
 
 uint compute_primes(uint start, uint end) {
@@ -311,7 +317,10 @@ void leverage_clock_source_lposc() {
 	xosc_disable();
 }
 
-void execute_benchmarks(uint bench_prime_size, uint bench_multi_size, uint bench_mat_size, uint bench_mat_float_size, uint bench_mat_double_size, uint nb_iteration_mat_mul) {
+void execute_benchmarks(uint bench_noop_size, uint bench_prime_size, uint bench_multi_size, uint bench_mat_size, uint bench_mat_float_size, uint bench_mat_double_size, uint nb_iteration_mat_mul) {
+	gpio_put(expe_pin, 1);
+	benchmark_noop(bench_noop_size); // Uses one CPU core
+	gpio_put(expe_pin, 0);
 	gpio_put(expe_pin, 1);
 	benchmark_result_prime = benchmark_prime(bench_prime_size); // Uses one CPU core
 	gpio_put(expe_pin, 0);

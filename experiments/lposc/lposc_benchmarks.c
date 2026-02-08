@@ -22,6 +22,7 @@
 #define TARGET_VOLTAGE VREG_VOLTAGE_0_75
 #define TARGET_LPOSC_TRIM 0x3f0
 
+#define BENCH_NOOP_SIZE 20
 #define BENCH_PRIME_SIZE 200
 #define BENCH_MULTI_SIZE 200
 #define BENCH_MAT_SIZE 72
@@ -59,7 +60,7 @@ int main() {
 	clock_set_reported_hz(clk_ref, lposc_freq);
 	clock_set_reported_hz(clk_sys, lposc_freq);
 	
-	execute_benchmarks(BENCH_PRIME_SIZE, BENCH_MULTI_SIZE, BENCH_MAT_SIZE, BENCH_MAT_FLOAT_SIZE, BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL);
+	execute_benchmarks(BENCH_NOOP_SIZE, BENCH_PRIME_SIZE, BENCH_MULTI_SIZE, BENCH_MAT_SIZE, BENCH_MAT_FLOAT_SIZE, BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL);
 	
 	// clock_source,vreg,lposc_trim,rosc_div,rosc_range,rosc_freqa,rosc_freqb,pll_vco,pll_div
 	char buf[100];

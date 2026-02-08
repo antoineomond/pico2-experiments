@@ -8,7 +8,7 @@ uint8_t benchmark_prime_multicores(uint benchmark_size);
 uint8_t benchmark_mat_mul(uint benchmark_size, uint nb_iteration_mat_mul);
 uint8_t benchmark_mat_mul_float(uint benchmark_size, uint nb_iteration_mat_mul);
 uint8_t benchmark_mat_mul_double(uint benchmark_size, uint nb_iteration_mat_mul);
-void execute_benchmarks(uint bench_prime_size, uint bench_multi_size, uint bench_mat_size, uint bench_mat_foat_size, uint bench_mat_double_size, uint nb_iteration_mat_mul);
+void execute_benchmarks(uint bench_noop_size, uint bench_prime_size, uint bench_multi_size, uint bench_mat_size, uint bench_mat_foat_size, uint bench_mat_double_size, uint nb_iteration_mat_mul);
 
 // Clock source leverages
 void leverage_clock_source_lposc();
