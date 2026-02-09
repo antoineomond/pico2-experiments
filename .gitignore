@@ -1,6 +1,6 @@
 build/
 openocd/
 .cache/
-validation.csv
+validation*.csv
 rpi4_mountpoint/
 execute_expe.sh
