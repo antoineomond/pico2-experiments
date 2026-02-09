@@ -18,11 +18,12 @@ const uint32_t RESET_VAL = 0xDEADBEEF;
 const int expe_pin = 11;
 extern float TIME_RATE;
 
-uint benchmark_result_prime;
-uint benchmark_result_multicores;
-uint8_t benchmark_result_mat_mul;
-uint8_t benchmark_result_mat_mul_float;
-uint8_t benchmark_result_mat_mul_double;
+#define CORRECT_PRIME_200 46
+#define CORRECT_PRIME_5000 669
+#define CORRECT_MAT_MUL 4294967295
+#define CORRECT_MAT_MUL_FLOAT_UPPER 0.525 
+#define CORRECT_MAT_MUL_FLOAT_LOWER 0.524 
+#define CORRECT_MAT_MUL_DOUBLE 0.5241578750190518665164063349948264658451080322265625
 
 void iteration_init() {
 	// Set pin to toggle experiments (also puts it to low)
@@ -50,10 +51,10 @@ void iteration_init() {
 	powman_clear_bits(&powman_hw->bod, 0x000001f1);
 }
 
-void iteration_end(const char* expe_params, uint clock_freq) {
+void iteration_end(char** strings_buffer, uint index_buff) {
 	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 	
-	#if !VALIDATION_RUN
+	#if VALIDATION_RUN
 	// Reinit the PLLs to print results
 	xosc_init();
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
@@ -69,13 +70,10 @@ void iteration_end(const char* expe_params, uint clock_freq) {
 	stdio_init_all();
 	sleep_ms(1000);
 	
-	uint iteration_num = watchdog_hw->scratch[1];
-	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "noop", 1, clock_freq);
-	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "prime", benchmark_result_prime, clock_freq);
-	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "prime_multicores", benchmark_result_multicores, clock_freq);
-	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "mat_mul", benchmark_result_mat_mul, clock_freq);
-	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "mat_mul_float", benchmark_result_mat_mul_float, clock_freq);
-	printf("%.2d,%s,%s,%d,%d,,,\n", iteration_num, expe_params, "mat_mul_double", benchmark_result_mat_mul_double, clock_freq);
+	for (int i = 0; i < index_buff; i++) {
+		printf(strings_buffer[i]);
+	}
+	
 	watchdog_hw->scratch[1] += 1;
 	#endif
 	
@@ -108,7 +106,10 @@ uint compute_primes(uint start, uint end) {
 uint8_t benchmark_prime(uint benchmark_size) {
 	volatile uint cpt = compute_primes(2, benchmark_size);
 	uint8_t correct = 1;
-	if(cpt != 46) {
+	if(benchmark_size == 200 && cpt != CORRECT_PRIME_200) {
+		correct = 0;
+	}
+	if(benchmark_size == 5000 && cpt != CORRECT_PRIME_5000) {
 		correct = 0;
 	}
 	return correct;
@@ -129,7 +130,10 @@ uint8_t benchmark_prime_multicores(uint benchmark_size) {
 	uint cpt_core0 = compute_primes(2, benchmark_size/2);
 	uint cpt_core1 = multicore_fifo_pop_blocking();
 	uint8_t correct = 1;
-	if(cpt_core0 + cpt_core1 != 46) {
+	if(benchmark_size == 200 && cpt_core0 + cpt_core1 != CORRECT_PRIME_200) {
+		correct = 0;
+	}
+	if(benchmark_size == 5000 && cpt_core0 + cpt_core1 != CORRECT_PRIME_5000) {
 		correct = 0;
 	}
 	return correct;
@@ -153,7 +157,7 @@ uint8_t benchmark_mat_mul(uint benchmark_size, uint nb_iteration_mat_mul) {
 		}
 		// Verification
 		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
-			if(C[i] != 4294967295) {
+			if(C[i] != CORRECT_MAT_MUL) {
 				correct = 0;
 			}
 		}
@@ -182,7 +186,7 @@ uint8_t benchmark_mat_mul_float(uint benchmark_size, uint nb_iteration_mat_mul) 
 		}
 		// Verification
 		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
-			if(C[i] > 0.525 || C[i] < 0.524) {
+			if(C[i] > CORRECT_MAT_MUL_FLOAT_UPPER || C[i] < CORRECT_MAT_MUL_FLOAT_LOWER) {
 				correct = 0;
 			}
 		}
@@ -211,7 +215,7 @@ uint8_t benchmark_mat_mul_double(uint benchmark_size, uint nb_iteration_mat_mul)
 		}
 		// Verification
 		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
-			if((double)C[i] != 0.5241578750190518665164063349948264658451080322265625) {
+			if((double)C[i] != CORRECT_MAT_MUL_DOUBLE) {
 				correct = 0;
 			}
 		}
@@ -317,26 +321,53 @@ void leverage_clock_source_lposc() {
 	xosc_disable();
 }
 
-void execute_benchmarks(uint bench_noop_size, uint bench_prime_size, uint bench_multi_size, uint bench_mat_size, uint bench_mat_float_size, uint bench_mat_double_size, uint nb_iteration_mat_mul) {
+void leverage_clock_source_rosc() {
+	rosc_enable();
+	xosc_init();
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+	restart_all_ticks();
+	uint rosc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC_PH);
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, rosc_freq);
+	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_ROSC_CLKSRC, rosc_freq);
+	clock_configure(clk_peri, 0, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS, rosc_freq, rosc_freq);
+	restart_all_ticks();
+	pll_deinit(pll_sys);
+	pll_deinit(pll_usb);
+	xosc_disable();
+}
+
+uint8_t execute_benchmarks(uint bench_noop_size, uint bench_prime_size, uint bench_multi_size, uint bench_mat_size, uint bench_mat_float_size, uint bench_mat_double_size, uint nb_iteration_mat_mul) {
 	gpio_put(expe_pin, 1);
 	benchmark_noop(bench_noop_size); // Uses one CPU core
 	gpio_put(expe_pin, 0);
 	gpio_put(expe_pin, 1);
-	benchmark_result_prime = benchmark_prime(bench_prime_size); // Uses one CPU core
+	uint8_t result_prime = benchmark_prime(bench_prime_size); // Uses one CPU core
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
 	gpio_put(expe_pin, 1);
-	benchmark_result_multicores = benchmark_prime_multicores(bench_multi_size); // Uses both cores
+	uint8_t result_multicores = benchmark_prime_multicores(bench_multi_size); // Uses both cores
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
 	gpio_put(expe_pin, 1);
-	benchmark_result_mat_mul = benchmark_mat_mul(bench_mat_size, nb_iteration_mat_mul); // Uses RAM
+	uint8_t result_mat_mul = benchmark_mat_mul(bench_mat_size, nb_iteration_mat_mul); // Uses RAM
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
 	gpio_put(expe_pin, 1);
-	benchmark_result_mat_mul_float = benchmark_mat_mul_float(bench_mat_float_size, nb_iteration_mat_mul); // Uses float co-processor
+	uint8_t result_mat_mul_float = benchmark_mat_mul_float(bench_mat_float_size, nb_iteration_mat_mul); // Uses float co-processor
 	gpio_put(expe_pin, 0);
 	gpio_put(expe_pin, 1);
-	benchmark_result_mat_mul_double = benchmark_mat_mul_double(bench_mat_double_size, nb_iteration_mat_mul); // Uses double co-processor
+	uint8_t result_mat_mul_double = benchmark_mat_mul_double(bench_mat_double_size, nb_iteration_mat_mul); // Uses double co-processor
 	gpio_put(expe_pin, 0);
+	return result_prime|result_multicores<<1|result_mat_mul<<2|result_mat_mul_float<<3|result_mat_mul_double<<4;
+}
+
+void led_blink(uint count) {
+	gpio_init(PICO_DEFAULT_LED_PIN);
+	gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+	for (int i = 0; i < count; i++) {
+		gpio_put(PICO_DEFAULT_LED_PIN, 1);
+		sleep_us((int)(250000*TIME_RATE));
+		gpio_put(PICO_DEFAULT_LED_PIN, 0);
+		sleep_us((int)(250000*TIME_RATE));
+	}
 }

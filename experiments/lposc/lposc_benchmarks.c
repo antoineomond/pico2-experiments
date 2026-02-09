@@ -15,13 +15,13 @@
 #include "hardware/sync.h"
 #include "pico/runtime_init.h"
 
-#define VALIDATION_RUN 1
-#define EXPE_NUM_OFFSET 25
-
 // Experiment parameters
 #define TARGET_VOLTAGE VREG_VOLTAGE_0_75
 #define TARGET_LPOSC_TRIM 0x3f0
 
+#define VALIDATION_RUN 1
+
+// Benchmark sizes
 #define BENCH_NOOP_SIZE 20
 #define BENCH_PRIME_SIZE 200
 #define BENCH_MULTI_SIZE 200
@@ -30,9 +30,7 @@
 #define BENCH_MAT_DOUBLE_SIZE 36
 #define NB_ITERATIONS_MAT_MUL 1
 
-extern const int expe_pin;
 float TIME_RATE = 1;
-volatile uint32_t iteration_num = 0;
 
 int main() {
 	// Inspired from https://github.com/peterharperuk/pico-examples/commit/7dccd00d15ded4ddf961f44fdcd1f11a9d8c8be1
@@ -63,9 +61,10 @@ int main() {
 	execute_benchmarks(BENCH_NOOP_SIZE, BENCH_PRIME_SIZE, BENCH_MULTI_SIZE, BENCH_MAT_SIZE, BENCH_MAT_FLOAT_SIZE, BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL);
 	
 	// clock_source,vreg,lposc_trim,rosc_div,rosc_range,rosc_freqa,rosc_freqb,pll_vco,pll_div
-	char buf[100];
-	sprintf(buf, "rosc,%.2d,%.3x,,,,,,", TARGET_VOLTAGE, TARGET_LPOSC_TRIM);
+	char* buf[1];
+	sprintf(buf[0], "rosc,%.2d,%.3x,,,,,,", TARGET_VOLTAGE, TARGET_LPOSC_TRIM);
 	
+	// TODO rework this part
 	iteration_end(buf, lposc_freq);
 	
 	return 0; // Should never reach here
