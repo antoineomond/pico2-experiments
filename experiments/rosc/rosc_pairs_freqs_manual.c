@@ -26,7 +26,7 @@
 #define BENCH_MAT_DOUBLE_SIZE 36
 #define NB_ITERATIONS_MAT_MUL 1000
 
-#define NB_EXPES 14
+#define NB_EXPES 16
 #define LINE_SIZE 50
 
 float TIME_RATE = 1;
@@ -54,6 +54,8 @@ const struct rosc_params expes[] = {
 	// rosc    8       1   fa5  5777    37     130380
 	// rosc   11       1   fa5    17  3777     150107
 	// rosc    9       1   fa5  5777    57     150100
+	// rosc   11      19   fa7   777   377      11001
+	// rosc    4       3   fa4   577    17      11004
 	{VREG_VOLTAGE_1_10, 5, ROSC_CTRL_FREQ_RANGE_VALUE_LOW, 0x00007777, 0x00000577}, // 30281 kHz
 	{VREG_VOLTAGE_0_75, 1, ROSC_CTRL_FREQ_RANGE_VALUE_LOW, 0x00000177, 0x00000003}, // 30276 kHz
 	
@@ -74,6 +76,9 @@ const struct rosc_params expes[] = {
 	
 	{VREG_VOLTAGE_1_10, 1, ROSC_CTRL_FREQ_RANGE_VALUE_MEDIUM, 0x00000017, 0x00003777}, // 150107 kHz
 	{VREG_VOLTAGE_1_00, 1, ROSC_CTRL_FREQ_RANGE_VALUE_MEDIUM, 0x00005777, 0x00000057}, // 150100 kHz
+	
+	{VREG_VOLTAGE_1_10, 19, ROSC_CTRL_FREQ_RANGE_VALUE_HIGH, 0x00000777, 0x00000377}, // 11001 kHz
+	{VREG_VOLTAGE_0_75, 3, ROSC_CTRL_FREQ_RANGE_VALUE_LOW, 0x00000577, 0x00000017}, // 11004 kHz
 };
 
 int main() {
@@ -87,7 +92,7 @@ int main() {
 		strings_buffer[i] = malloc(LINE_SIZE);
 	}
 	
-	uint expe_num = 13;
+	uint expe_num = 15;
 	
 	// Setup parameters
 	vreg_set_voltage(expes[expe_num].vreg);

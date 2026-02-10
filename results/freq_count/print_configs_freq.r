@@ -2,7 +2,7 @@ library("ggplot2")
 library("dplyr")
 library(rlang)
 
-freq <- 150000
+freq <- 11000
 tol <- 0.01
 df <- read.csv("rosc_freqs.csv")
 df <- df[order(df$clock_freq), ]
