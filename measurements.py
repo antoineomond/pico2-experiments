@@ -103,7 +103,7 @@ with open(result_file, "w") as f:
     for expe_num, samples in enumerate(current_samples):
         for current_sample in samples:
             current, timestamp = current_sample
-            f.write(f"{expe_num//len(expes)},{expes[expe_num]},,,{current},{timestamp},\n")
+            f.write(f"{expe_num//len(expes)},{expes[expe_num%len(expes)]},,,{current},{timestamp},\n")
     for expe_num, timing_sample in enumerate(timing_samples):
-        f.write(f"{expe_num//len(expes)},{expes[expe_num]},,,,,{timing_sample}\n")
+        f.write(f"{expe_num//len(expes)},{expes[expe_num%len(expes)]},,,,,{timing_sample}\n")
 print("Done")

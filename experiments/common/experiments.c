@@ -41,6 +41,8 @@ void iteration_init() {
 		sleep_ms(10000); 
 		// Scratch values survive between reboots between reboots
 		watchdog_hw->scratch[0] = RESET_VAL;
+		watchdog_hw->scratch[2] = 0;
+		watchdog_hw->scratch[3] = 0;
 		watchdog_reboot(0, 0, 0);
 	}
 	pull_down_gpios();
@@ -337,28 +339,42 @@ void leverage_clock_source_rosc() {
 }
 
 uint8_t execute_benchmarks(uint bench_noop_size, uint bench_prime_size, uint bench_multi_size, uint bench_mat_size, uint bench_mat_float_size, uint bench_mat_double_size, uint nb_iteration_mat_mul) {
-	gpio_put(expe_pin, 1);
-	benchmark_noop(bench_noop_size); // Uses one CPU core
-	gpio_put(expe_pin, 0);
-	gpio_put(expe_pin, 1);
-	uint8_t result_prime = benchmark_prime(bench_prime_size); // Uses one CPU core
-	gpio_put(expe_pin, 0);
+	if(watchdog_hw->scratch[3] == 0) {
+		gpio_put(expe_pin, 1);
+		benchmark_noop(bench_noop_size); // Uses one CPU core
+		gpio_put(expe_pin, 0);
+	}
+	if(watchdog_hw->scratch[3] == 1) {
+		gpio_put(expe_pin, 1);
+		uint8_t result_prime = benchmark_prime(bench_prime_size); // Uses one CPU core
+		gpio_put(expe_pin, 0);
+	}
 	sleep_us((int)(100000*TIME_RATE));
-	gpio_put(expe_pin, 1);
-	uint8_t result_multicores = benchmark_prime_multicores(bench_multi_size); // Uses both cores
-	gpio_put(expe_pin, 0);
+	if(watchdog_hw->scratch[3] == 2) {
+		gpio_put(expe_pin, 1);
+		uint8_t result_multicores = benchmark_prime_multicores(bench_multi_size); // Uses both cores
+		gpio_put(expe_pin, 0);
+	}
 	sleep_us((int)(100000*TIME_RATE));
-	gpio_put(expe_pin, 1);
-	uint8_t result_mat_mul = benchmark_mat_mul(bench_mat_size, nb_iteration_mat_mul); // Uses RAM
-	gpio_put(expe_pin, 0);
+	if(watchdog_hw->scratch[3] == 3) {
+		gpio_put(expe_pin, 1);
+		uint8_t result_mat_mul = benchmark_mat_mul(bench_mat_size, nb_iteration_mat_mul); // Uses RAM
+		gpio_put(expe_pin, 0);
+	}
 	sleep_us((int)(100000*TIME_RATE));
-	gpio_put(expe_pin, 1);
-	uint8_t result_mat_mul_float = benchmark_mat_mul_float(bench_mat_float_size, nb_iteration_mat_mul); // Uses float co-processor
-	gpio_put(expe_pin, 0);
-	gpio_put(expe_pin, 1);
-	uint8_t result_mat_mul_double = benchmark_mat_mul_double(bench_mat_double_size, nb_iteration_mat_mul); // Uses double co-processor
-	gpio_put(expe_pin, 0);
-	return result_prime|result_multicores<<1|result_mat_mul<<2|result_mat_mul_float<<3|result_mat_mul_double<<4;
+	if(watchdog_hw->scratch[3] == 4) {
+		gpio_put(expe_pin, 1);
+		uint8_t result_mat_mul_float = benchmark_mat_mul_float(bench_mat_float_size, nb_iteration_mat_mul); // Uses float co-processor
+		gpio_put(expe_pin, 0);
+	}
+	if(watchdog_hw->scratch[3] == 5) {
+		gpio_put(expe_pin, 1);
+		uint8_t result_mat_mul_double = benchmark_mat_mul_double(bench_mat_double_size, nb_iteration_mat_mul); // Uses double co-processor
+		gpio_put(expe_pin, 0);
+	}
+	watchdog_hw->scratch[3] = (watchdog_hw->scratch[3]+1)%6;
+	return 1;
+	//return result_prime|result_multicores<<1|result_mat_mul<<2|result_mat_mul_float<<3|result_mat_mul_double<<4;
 }
 
 void led_blink(uint count) {

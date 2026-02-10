@@ -78,6 +78,7 @@ const struct rosc_params expes[] = {
 int main() {
 	// Inspired from https://github.com/peterharperuk/pico-examples/commit/7dccd00d15ded4ddf961f44fdcd1f11a9d8c8be1
 	iteration_init();
+	sleep_ms(3000); // Check if it helps stabilisation
 	leverage_clock_source_rosc();
 	uint index_buff = 0;
 	char** strings_buffer = malloc(sizeof(char*) * NB_EXPES);
@@ -85,35 +86,35 @@ int main() {
 		strings_buffer[i] = malloc(LINE_SIZE);
 	}
 	
-	for (uint expe_num = 0; expe_num < NB_EXPES; expe_num++) {
-		// Setup parameters
-		vreg_set_voltage(expes[expe_num].vreg);
-		rosc_set_div(expes[expe_num].div);
-		rosc_set_range(expes[expe_num].range);
-		rosc_write(&rosc_hw->freqa, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | expes[expe_num].freqa);
-		rosc_write(&rosc_hw->freqb, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | expes[expe_num].freqb);
+	uint expe_num = watchdog_hw->scratch[2];
+	//for (uint expe_num = 0; expe_num < NB_EXPES; expe_num++) {
+	// Setup parameters
+	vreg_set_voltage(expes[expe_num].vreg);
+	rosc_set_div(expes[expe_num].div);
+	rosc_set_range(expes[expe_num].range);
+	rosc_write(&rosc_hw->freqa, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | expes[expe_num].freqa);
+	rosc_write(&rosc_hw->freqb, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | expes[expe_num].freqb);
 
-		// Count rosc freq
-		// Make clk_ref have a stable clock to count frequency  
-		xosc_init();
-		clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
-		restart_all_ticks();
-		uint rosc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC);
+	// Count rosc freq
+	// Make clk_ref have a stable clock to count frequency  
+	xosc_init();
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+	restart_all_ticks();
+	uint rosc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC);
 
-		// Make rosc as clk_ref, then disable XOSC as it is no longer needed
-		clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, rosc_freq);
-		restart_all_ticks();
-		xosc_disable();
-		
-		clock_set_reported_hz(clk_ref, rosc_freq);
-		clock_set_reported_hz(clk_sys, rosc_freq);
-		
-		uint8_t results = execute_benchmarks(BENCH_NOOP_SIZE, BENCH_PRIME_SIZE, BENCH_MULTI_SIZE, BENCH_MAT_SIZE, BENCH_MAT_FLOAT_SIZE, BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL);
-		
-		sprintf(strings_buffer[index_buff++], "%d,rosc,%.2d,,%.2d,%x,%.4x,%.4x,,,,%b,%d,,,\n", watchdog_hw->scratch[1], expes[expe_num].vreg, expes[expe_num].div, expes[expe_num].range, expes[expe_num].freqa, expes[expe_num].freqb, results, rosc_freq);
-		
-		sleep_ms(2000);
-	}
+	// Make rosc as clk_ref, then disable XOSC as it is no longer needed
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, rosc_freq);
+	restart_all_ticks();
+	xosc_disable();
+	
+	clock_set_reported_hz(clk_ref, rosc_freq);
+	clock_set_reported_hz(clk_sys, rosc_freq);
+	
+	uint8_t results = execute_benchmarks(BENCH_NOOP_SIZE, BENCH_PRIME_SIZE, BENCH_MULTI_SIZE, BENCH_MAT_SIZE, BENCH_MAT_FLOAT_SIZE, BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL);
+	
+	sprintf(strings_buffer[index_buff++], "%d,rosc,%.2d,,%.2d,%x,%.4x,%.4x,,,,%b,%d,,,\n", watchdog_hw->scratch[1], expes[expe_num].vreg, expes[expe_num].div, expes[expe_num].range, expes[expe_num].freqa, expes[expe_num].freqb, results, rosc_freq);
+	//}
+	watchdog_hw->scratch[2] = (watchdog_hw->scratch[2] + 1)%NB_EXPES;
 	iteration_end(strings_buffer, index_buff);
 	
 	return 0; // Should never reach here
