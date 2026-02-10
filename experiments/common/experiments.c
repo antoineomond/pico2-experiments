@@ -41,8 +41,6 @@ void iteration_init() {
 		sleep_ms(10000); 
 		// Scratch values survive between reboots between reboots
 		watchdog_hw->scratch[0] = RESET_VAL;
-		watchdog_hw->scratch[2] = 0;
-		watchdog_hw->scratch[3] = 0;
 		watchdog_reboot(0, 0, 0);
 	}
 	pull_down_gpios();

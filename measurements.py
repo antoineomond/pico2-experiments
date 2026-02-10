@@ -17,16 +17,13 @@ deadline = time.time()
 start_time = time.time()
 timing_samples = []
 
-if(len(sys.argv) < 2):
-    print("Precise all args")
+if(len(sys.argv) < 5):
+    print("Missing args")
     exit()
-nb_iter = int(sys.argv[1])
-live = int(sys.argv[2])
-
-expes = []
-with open("expes_list") as f:
-    for line in f:
-        expes.extend([f"{line.strip()},{bench}" for bench in ["noop", "prime", "prime_multicores", "mat_mul", "mat_mul_float", "mat_mul_double"]])
+nb_expes = int(sys.argv[1])
+nb_iter = int(sys.argv[2])
+offset = int(sys.argv[3]) # If there was other expes done before, just offset to correctly assign the new expes
+live = int(sys.argv[4])
 
 def next_expe(user_gpio, level, tick):
     global init
@@ -51,7 +48,7 @@ def next_expe(user_gpio, level, tick):
         timing_samples.append(t)
         started = 0
         expe_num += 1
-        if(expe_num >= len(expes)*nb_iter):
+        if(expe_num >= nb_expes*nb_iter):
              done = 1
         print(expe_num)
 
@@ -76,8 +73,8 @@ if not pi.connected:
     print("pigpiod need to run in background")
     exit(0)
 pi.callback(EXPE_PIN, pigpio.EITHER_EDGE, next_expe)
-current_samples = [[] for _ in range(len(expes)*nb_iter)]
-live_samples = [[] for _ in range(len(expes)*nb_iter)]
+current_samples = [[] for _ in range(nb_expes*nb_iter)]
+live_samples = [[] for _ in range(nb_expes*nb_iter)]
 print("Sampling starts")
 while not done and (time.time() - deadline) < DEADLINE_ITERATION:
     val = ina228.current*1000
@@ -97,13 +94,12 @@ while not done and (time.time() - deadline) < DEADLINE_ITERATION:
 # Write results
 print("Sampling ends")
 result_file = "results.csv"
-
 with open(result_file, "w") as f:
-    f.write("iteration_num,clock_source,vreg,lposc_trim,rosc_div,rosc_range,rosc_freqa,rosc_freqb,pll_vco,pll_div,benchmark_name,validation_result,clock_freq,current_sample,current_timestamp,timing_sample\n")
+    f.write("iteration_num,expe_num,validation_result,clock_freq,current_sample,current_timestamp,timing_sample\n")
     for expe_num, samples in enumerate(current_samples):
         for current_sample in samples:
             current, timestamp = current_sample
-            f.write(f"{expe_num//len(expes)},{expes[expe_num%len(expes)]},,,{current},{timestamp},\n")
+            f.write(f"{expe_num//nb_expes},{expe_num%nb_expes+offset},,,{current},{timestamp},\n")
     for expe_num, timing_sample in enumerate(timing_samples):
-        f.write(f"{expe_num//len(expes)},{expes[expe_num%len(expes)]},,,,,{timing_sample}\n")
+        f.write(f"{expe_num//nb_expes},{expe_num%nb_expes+offset},,,,,{timing_sample}\n")
 print("Done")

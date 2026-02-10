@@ -15,7 +15,7 @@
 #include "hardware/sync.h"
 #include "pico/runtime_init.h"
 
-#define VALIDATION_RUN 0
+#define VALIDATION_RUN 1
 
 // Benchmark sizes
 #define BENCH_NOOP_SIZE 10
@@ -30,6 +30,7 @@
 #define LINE_SIZE 50
 
 float TIME_RATE = 1;
+extern const int expe_pin;
 
 struct rosc_params {
   uint vreg;
@@ -78,7 +79,7 @@ const struct rosc_params expes[] = {
 int main() {
 	// Inspired from https://github.com/peterharperuk/pico-examples/commit/7dccd00d15ded4ddf961f44fdcd1f11a9d8c8be1
 	iteration_init();
-	sleep_ms(3000); // Check if it helps stabilisation
+	sleep_ms(3000);
 	leverage_clock_source_rosc();
 	uint index_buff = 0;
 	char** strings_buffer = malloc(sizeof(char*) * NB_EXPES);
@@ -86,8 +87,8 @@ int main() {
 		strings_buffer[i] = malloc(LINE_SIZE);
 	}
 	
-	uint expe_num = watchdog_hw->scratch[2];
-	//for (uint expe_num = 0; expe_num < NB_EXPES; expe_num++) {
+	uint expe_num = 13;
+	
 	// Setup parameters
 	vreg_set_voltage(expes[expe_num].vreg);
 	rosc_set_div(expes[expe_num].div);
@@ -110,12 +111,53 @@ int main() {
 	clock_set_reported_hz(clk_ref, rosc_freq);
 	clock_set_reported_hz(clk_sys, rosc_freq);
 	
-	uint8_t results = execute_benchmarks(BENCH_NOOP_SIZE, BENCH_PRIME_SIZE, BENCH_MULTI_SIZE, BENCH_MAT_SIZE, BENCH_MAT_FLOAT_SIZE, BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL);
+	sleep_ms(3000);
+	
+	uint results = 1;
+	gpio_put(expe_pin, 1);
+	benchmark_noop(BENCH_NOOP_SIZE);
+	gpio_put(expe_pin, 0);
+	sleep_ms(100);
+	gpio_put(expe_pin, 1);
+	uint8_t result_prime = benchmark_prime(BENCH_PRIME_SIZE); // Uses one CPU core
+	gpio_put(expe_pin, 0);
+	sleep_ms(100);
+	gpio_put(expe_pin, 1);
+	uint8_t result_multicores = benchmark_prime_multicores(BENCH_MULTI_SIZE); // Uses both cores
+	gpio_put(expe_pin, 0);
+	sleep_ms(100);
+	gpio_put(expe_pin, 1);
+	uint8_t result_mat_mul = benchmark_mat_mul(BENCH_MAT_SIZE, NB_ITERATIONS_MAT_MUL); // Uses RAM
+	gpio_put(expe_pin, 0);
+	sleep_ms(100);
+	gpio_put(expe_pin, 1);
+	uint8_t result_mat_mul_float = benchmark_mat_mul_float(BENCH_MAT_FLOAT_SIZE, NB_ITERATIONS_MAT_MUL); // Uses float co-processor
+	gpio_put(expe_pin, 0);
+	sleep_ms(100);
+	gpio_put(expe_pin, 1);
+	uint8_t result_mat_mul_double = benchmark_mat_mul_double(BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL); // Uses double co-processor
+	gpio_put(expe_pin, 0);
+	sleep_ms(100);
 	
 	sprintf(strings_buffer[index_buff++], "%d,rosc,%.2d,,%.2d,%x,%.4x,%.4x,,,,%b,%d,,,\n", watchdog_hw->scratch[1], expes[expe_num].vreg, expes[expe_num].div, expes[expe_num].range, expes[expe_num].freqa, expes[expe_num].freqb, results, rosc_freq);
-	//}
-	watchdog_hw->scratch[2] = (watchdog_hw->scratch[2] + 1)%NB_EXPES;
-	iteration_end(strings_buffer, index_buff);
+	//iteration_end(strings_buffer, index_buff);
+	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
+	xosc_init();
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+	restart_all_ticks();
+	pll_init(pll_sys, PLL_SYS_REFDIV, PLL_SYS_VCO_FREQ_HZ, PLL_SYS_POSTDIV1, PLL_SYS_POSTDIV2);
+	pll_init(pll_usb, PLL_USB_REFDIV, PLL_USB_VCO_FREQ_HZ, PLL_USB_POSTDIV1, PLL_USB_POSTDIV2);
+	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, SYS_CLK_HZ);
+	clock_configure_undivided(clk_peri,
+									0,
+									CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS,
+									SYS_CLK_HZ);
+	
+	stdio_init_all();
+	sleep_ms(1000);
+	while(true) {
+		sleep_ms(60000);
+	}
 	
 	return 0; // Should never reach here
 }

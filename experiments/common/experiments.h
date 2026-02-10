@@ -3,6 +3,7 @@
 void iteration_init();
 void iteration_end(char** strings_buffer, uint index_buff);
 
+uint8_t benchmark_noop(uint benchmark_size);
 uint8_t benchmark_prime(uint benchmark_size);
 uint8_t benchmark_prime_multicores(uint benchmark_size);
 uint8_t benchmark_mat_mul(uint benchmark_size, uint nb_iteration_mat_mul);
