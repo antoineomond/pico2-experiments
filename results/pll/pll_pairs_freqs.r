@@ -2,7 +2,7 @@ library("ggplot2")
 library("dplyr")
 library(rlang)
 
-df <- read.csv("pairs_freqs_manual.csv")
+df <- read.csv("pll_pairs_freqs.csv")
 #df <- df %>%
 #  mutate(
 #    x_range = cut(
@@ -15,16 +15,16 @@ df <- read.csv("pairs_freqs_manual.csv")
 df <- df %>%
   mutate(
     legend_group = case_when(
-      expe_num %in% c(4:9, 10:15)   ~ "30MHz",
-      expe_num %in% c(16:21, 22:27)   ~ "50MHz",
-      expe_num %in% c(28:33, 34:39)   ~ "70MHz",
-      expe_num %in% c(40:45, 46:51)   ~ "110MHz",
-      expe_num %in% c(52:57, 58:63)   ~ "130MHz",
-      expe_num %in% c(64:69, 70:75)   ~ "150MHz",
-      expe_num %in% c(76:81, 82:87)   ~ "11MHz"
+      expe_num %in% c(0:5, 6:11)   ~ "30MHz",
+      expe_num %in% c(12:17, 18:23)   ~ "50MHz",
+      expe_num %in% c(24:29, 30:35)   ~ "70MHz",
+      expe_num %in% c(36:41, 42:47)   ~ "110MHz",
+      expe_num %in% c(48:53, 54:59)   ~ "130MHz",
+      expe_num %in% c(60:65, 66:71)   ~ "150MHz",
+      expe_num %in% c(72:77, 78:83)   ~ "11MHz"
     )
   )
-df <- df %>% filter(expe_num > 3)
+#df <- df %>% filter(expe_num > 3)
 p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=legend_group, group=factor(expe_num))) +
 	geom_line(na.rm = TRUE) +
 	scale_y_continuous(limits=c(2, 16), n.breaks=15) +
@@ -43,5 +43,4 @@ p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=legend_grou
       "11MHz"      = "dark grey"
     )
   )
-ggsave("pairs_freqs_manual.pdf", plot=p)
-
+ggsave("pll_pairs_freqs.pdf", plot=p)
