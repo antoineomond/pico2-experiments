@@ -1,17 +1,12 @@
-add_executable(rosc_benchmarks
-        rosc_benchmarks.c)
-target_link_libraries(rosc_benchmarks
+add_executable(pll_pairs_freqs
+        pll_pairs_freqs.c)
+target_link_libraries(pll_pairs_freqs
 				pico_stdlib
-        hardware_clocks
-				hardware_pll
-				hardware_xosc
-				hardware_vreg
-				pico_multicore
-				pico_rand
-				hardware_sleep)
-pico_enable_stdio_usb(rosc_benchmarks 0)
-pico_enable_stdio_uart(rosc_benchmarks 1)
-pico_add_extra_outputs(rosc_benchmarks)
+				experiments
+				hardware_pll)
+pico_enable_stdio_usb(pll_pairs_freqs 0)
+pico_enable_stdio_uart(pll_pairs_freqs 1)
+pico_add_extra_outputs(pll_pairs_freqs)
 
 add_executable(rosc_pairs_freqs
         rosc_pairs_freqs.c)
