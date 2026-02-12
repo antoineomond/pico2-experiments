@@ -15,7 +15,7 @@ int main() {
 	clock_stop(clk_usb);
 	clock_stop(clk_adc);
 	
-	printf("clock_source,vco_freq,divider\n");
+	printf("clock_source,vco_freq,div1,div2,clock_freq\n");
 	for (int vco_freq = 760; vco_freq < 1570; vco_freq += 10) {
 		for (int div1 = 1; div1 < 8; div1++) {
 			for (int div2 = 1; div2 < 8; div2++) {

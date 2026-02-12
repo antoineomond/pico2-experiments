@@ -1,4 +1,4 @@
-clock_source,vco_freq,divider
+clock_source,vco_freq,div1,div2,clock_freq
 pll,0760,1,6,63000
 pll,0760,1,7,108000
 pll,0760,2,3,126000

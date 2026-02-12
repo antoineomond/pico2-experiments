@@ -33,7 +33,7 @@ void iteration_init() {
 	
 	#if VALIDATION_RUN
 	if(watchdog_hw->scratch[0] != RESET_VAL) {
-		watchdog_hw->scratch[1] = 0;
+		watchdog_hw->scratch[1] = 0; // Iteration num
 	}
 	#else
 	if(watchdog_hw->scratch[0] != RESET_VAL) {
