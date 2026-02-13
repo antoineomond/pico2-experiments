@@ -23,7 +23,7 @@
 #define BENCH_MAT_DOUBLE_SIZE 36
 #define NB_ITERATIONS_MAT_MUL 1000
 
-#define NB_EXPES 14
+#define NB_EXPES 12
 #define LINE_SIZE 50
 
 float TIME_RATE = 1;

@@ -39,3 +39,18 @@ target_link_libraries(rosc_pairs_freqs_manual
 pico_enable_stdio_usb(rosc_pairs_freqs_manual 0)
 pico_enable_stdio_uart(rosc_pairs_freqs_manual 1)
 pico_add_extra_outputs(rosc_pairs_freqs_manual)
+
+add_executable(xosc_pairs_freqs
+        xosc_pairs_freqs.c)
+target_link_libraries(xosc_pairs_freqs
+				pico_stdlib
+        hardware_clocks
+				hardware_pll
+				hardware_xosc
+				hardware_vreg
+				pico_multicore
+				experiments
+				hardware_sleep)
+pico_enable_stdio_usb(xosc_pairs_freqs 0)
+pico_enable_stdio_uart(xosc_pairs_freqs 1)
+pico_add_extra_outputs(xosc_pairs_freqs)
