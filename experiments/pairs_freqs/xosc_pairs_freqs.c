@@ -31,16 +31,17 @@ extern const int expe_pin;
 
 int main() {
 	iteration_init();
-	
-	const uint vreg_output = VREG_VOLTAGE_0_75;
-	vreg_set_voltage(vreg_output);
-	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_XOSC_CLKSRC, XOSC_HZ); // crash if changing pll while assigned on clk_sys 
+	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_XOSC_CLKSRC, XOSC_HZ);
 	pll_deinit(pll_sys);
 	pll_deinit(pll_usb);
 	rosc_disable();
-	sleep_ms(1000);
 	
-	uint8_t results = execute_benchmarks(BENCH_NOOP_SIZE, BENCH_PRIME_SIZE, BENCH_MULTI_SIZE, BENCH_MAT_SIZE, BENCH_MAT_FLOAT_SIZE, BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL);
+	for (uint vreg = VREG_VOLTAGE_1_10; vreg >= VREG_VOLTAGE_0_75; vreg--) {
+		vreg_set_voltage(vreg);
+		sleep_ms(5000);
+		uint8_t results = execute_benchmarks(BENCH_NOOP_SIZE, BENCH_PRIME_SIZE, BENCH_MULTI_SIZE, BENCH_MAT_SIZE, BENCH_MAT_FLOAT_SIZE, BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL);
+		sleep_ms(5000);
+	}
 	
 	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 	

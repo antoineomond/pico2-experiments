@@ -2,16 +2,9 @@ library("ggplot2")
 library("dplyr")
 library(rlang)
 
-df <- read.csv("xosc_pairs_freqs.csv")
-#df <- df %>%
-#  mutate(
-#    x_range = cut(
-#      expe_num,
-#      breaks = c(0, 15, 30),   # upper bound is exclusive by default
-#      right = FALSE,              # [0,15), [15,30), ...
-#      labels = c("non trimmed", "trimmed")
-#    )
-#  )
+df <- read.csv("xosc_pairs_freqs_auto.csv")
+
+# Associate expe_num with parameter (vreg)
 df <- df %>%
   mutate(
     legend_group = case_when(
@@ -24,13 +17,18 @@ df <- df %>%
       expe_num %in% c(36:41)   ~ "0.80V",
       expe_num %in% c(42:47)   ~ "0.75V",
     )
-  )
-#df <- df %>% filter(expe_num > 3)
-p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=legend_group, group=factor(expe_num))) +
+  ) 
+
+# If experiments are chained, the timestamp is not valid anymore. Values have to be grouped and plotted according to row number 
+df <- df %>%
+	group_by(legend_group) %>%
+	arrange(legend_group) %>%
+	mutate(index = row_number()) %>%
+	ungroup()
+
+p <- ggplot(df, aes(x = index, y = current_sample, color=legend_group, group=factor(expe_num))) +
 	geom_line(na.rm = TRUE) +
 	scale_y_continuous(limits=c(2, 16), n.breaks=15) +
-	#geom_hline(yintercept = median(df[df$expe_num == 0,]$current_sample, na.rm = TRUE), color = "red") +
-	#facet_wrap(~ x_range) +
 	labs(title = "Running all 5 benchmarks one after the other. \nFor each target frequency, the closest configurations with the lowest \nand highest vreg are selected.", x = "Timestamp in seconds", y = "Current sample in mA") +
   scale_color_manual(
 		name = "Configuration",
@@ -45,4 +43,4 @@ p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=legend_grou
       "0.75V"      = "blue"
     )
   )
-ggsave("xosc_pairs_freqs.pdf", plot=p)
+ggsave("xosc_pairs_freqs_auto.pdf", plot=p)
