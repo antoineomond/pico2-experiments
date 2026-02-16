@@ -2,7 +2,7 @@ library("ggplot2")
 library("dplyr")
 library(rlang)
 
-df <- read.csv("pll_pairs_freqs.csv")
+df <- read.csv("pll_pairs_freqs_090V.csv")
 #df <- df %>%
 #  mutate(
 #    x_range = cut(
@@ -24,6 +24,14 @@ df <- df %>%
       expe_num %in% c(72:77, 78:83)   ~ "11MHz"
     )
   )
+
+# If experiments are chained, the timestamp is not valid anymore. Values have to be grouped and plotted according to row number 
+#df <- df %>%
+#	group_by(legend_group) %>%
+#	arrange(legend_group) %>%
+#	mutate(index = row_number()) %>%
+#	ungroup()
+
 #df <- df %>% filter(expe_num > 3)
 p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=legend_group, group=factor(expe_num))) +
 	geom_line(na.rm = TRUE) +
@@ -43,4 +51,4 @@ p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=legend_grou
       "11MHz"      = "dark grey"
     )
   )
-ggsave("pll_pairs_freqs.pdf", plot=p)
+ggsave("pll_pairs_freqs_090V.pdf", plot=p)
