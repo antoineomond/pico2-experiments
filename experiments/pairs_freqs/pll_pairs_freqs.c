@@ -72,19 +72,19 @@ int main() {
 		strings_buffer[i] = malloc(LINE_SIZE);
 	}
 	
-	const uint expe_num = 11;
-	//for (uint expe_num = 0; expe_num < 12; expe_num++) {
 	vreg_set_voltage(VREG_VOLTAGE_0_90);
-	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_XOSC_CLKSRC, XOSC_HZ); // crash if changing pll while assigned on clk_sys 
-	pll_init(pll_sys, PLL_SYS_REFDIV, expes[expe_num].vco_freq*MHZ, expes[expe_num].div1, expes[expe_num].div2);
-	uint pll_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY)*1000;
-	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, pll_freq); // crash if changing pll while assigned on clk_sys 
-	//uint pll_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY)*1000;
-	sleep_ms(1000);
-	uint8_t results = execute_benchmarks(BENCH_NOOP_SIZE, BENCH_PRIME_SIZE, BENCH_MULTI_SIZE, BENCH_MAT_SIZE, BENCH_MAT_FLOAT_SIZE, BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL);
-	//sprintf(strings_buffer[index_buff++], "%d,pll,%.2d,,%.2d,%x,%.4x,%.4x,,,,%b,%d,,,\n", watchdog_hw->scratch[1], expes[expe_num].vco_freq, expes[expe_num].div1, expes[expe_num].div2, results, pll_freq);
-	//iteration_end(strings_buffer, index_buff);
-	//}
+	//const uint expe_num = 11;
+	for (uint expe_num = 0; expe_num < 12; expe_num++) {
+		clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_XOSC_CLKSRC, XOSC_HZ); // crash if changing pll while assigned on clk_sys 
+		pll_init(pll_sys, PLL_SYS_REFDIV, expes[expe_num].vco_freq*MHZ, expes[expe_num].div1, expes[expe_num].div2);
+		uint pll_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY)*1000;
+		clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, pll_freq); // crash if changing pll while assigned on clk_sys 
+		//uint pll_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY)*1000;
+		sleep_ms(1000);
+		uint8_t results = execute_benchmarks(BENCH_NOOP_SIZE, BENCH_PRIME_SIZE, BENCH_MULTI_SIZE, BENCH_MAT_SIZE, BENCH_MAT_FLOAT_SIZE, BENCH_MAT_DOUBLE_SIZE, NB_ITERATIONS_MAT_MUL);
+		//sprintf(strings_buffer[index_buff++], "%d,pll,%.2d,,%.2d,%x,%.4x,%.4x,,,,%b,%d,,,\n", watchdog_hw->scratch[1], expes[expe_num].vco_freq, expes[expe_num].div1, expes[expe_num].div2, results, pll_freq);
+		//iteration_end(strings_buffer, index_buff);
+	}
 	
 	// Restore PLL for next deployment
 	//vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
