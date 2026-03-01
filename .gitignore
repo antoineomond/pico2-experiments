@@ -1,7 +1,36 @@
-.fuse*
 build/
 openocd/
 .cache/
 validation*.csv
 rpi4_mountpoint/
 execute_expe.sh
+
+# latex
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.brf
+*.dvi
+*.idx
+*.ilg
+*.ind
+*.log
+*.out
+*.ps
+*.run.xml
+*.synctex.gz
+*.toc
+*.fdb_latexmk
+*.fls
+*.xdv
+*.lof
+*.lol
+*.lot
+*.maf
+*.mtc*
+*.stc*
+main.pdf
+
+# other
+.fuse*

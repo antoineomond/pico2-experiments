@@ -14,6 +14,8 @@ uint8_t execute_benchmarks(uint bench_noop_size, uint bench_prime_size, uint ben
 // Clock source leverages
 void leverage_clock_source_lposc();
 void leverage_clock_source_rosc();
+void leverage_clock_source_xosc();
+void leverage_clock_source_pll(uint vco_freq, uint div1, uint div2);
 void restart_all_ticks(void);
 
 // Additional leverages (turn off unused stuff)

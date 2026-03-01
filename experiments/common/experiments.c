@@ -13,27 +13,58 @@
 #include "hardware/vreg.h"
 #include "hardware/powman.h"
 
-const uint US = 1000000;
-const uint32_t RESET_VAL = 0xDEADBEEF; 
-const int expe_pin = 11;
-extern float TIME_RATE;
+// Default values
+#define ROSC_DEFAULT_DIVIDER 8
+#define ROSC_DEFAULT_DRIVE_STRENGTH 0
+#define ROSC_DEFAULT_RANGE ROSC_CTRL_FREQ_RANGE_VALUE_LOW
+#define LPOSC_DEFAULT_TRIM 0
 
-#define CORRECT_PRIME_200 46
-#define CORRECT_PRIME_5000 669
+// Benchmark sizes
+#define BENCH_NOOP_SIZE 10
+#define BENCH_PRIME_SIZE 5000
+#define BENCH_PRIME_SIZE_LPOSC 200
+#define BENCH_MAT_SIZE 72
+#define BENCH_MAT_FLOAT_SIZE 72
+#define BENCH_MAT_DOUBLE_SIZE 36
+#define NB_ITERATIONS_MAT_MUL 1000
+#define NB_ITERATIONS_MAT_MUL_LPOSC 1
+
+// Benchmark correct results
+#define CORRECT_PRIME 669
+#define CORRECT_PRIME_LPOSC 46
 #define CORRECT_MAT_MUL 4294967295
 #define CORRECT_MAT_MUL_FLOAT_UPPER 0.525 
 #define CORRECT_MAT_MUL_FLOAT_LOWER 0.524 
 #define CORRECT_MAT_MUL_DOUBLE 0.5241578750190518665164063349948264658451080322265625
 
-void iteration_init() {
-	// Set pin to toggle experiments (also puts it to low)
-	sleep_ms(100); // For unknown reason, not sleeping here make firmware upload using SWD to fail
+// Constants
+const uint US = 1000000;
+const uint32_t RESET_VAL = 0xDEADBEEF; 
+const uint LINE_SIZE = 50;
+
+const int expe_pin = 11;
+float TIME_RATE = 1;
+
+// Temporary buffer to store experiment results
+uint index_buff = 0;
+char** strings_buffer;
+
+
+void iteration_init(uint nb_expes) {
+	sleep_ms(100); // For unknown reason, not sleeping here sometimes makes firmware upload using SWD to fail
+	
+	// Set GPIO pin to advertise experiments start and end, and puts it to low
 	gpio_init(expe_pin);
 	gpio_set_dir(expe_pin, GPIO_OUT);
-	
-	#if VALIDATION_RUN
 	if(watchdog_hw->scratch[0] != RESET_VAL) {
 		watchdog_hw->scratch[1] = 0; // Iteration num
+	}
+	
+	#if PHASE==0
+	// Initialise buffer to store experiment results
+	strings_buffer = malloc(sizeof(char*) * nb_expes)
+	for (int i = 0; i < nb_expes; i++) {
+		strings_buffer[i] = malloc(LINE_SIZE);
 	}
 	#else
 	if(watchdog_hw->scratch[0] != RESET_VAL) {
@@ -54,7 +85,7 @@ void iteration_init() {
 void iteration_end(char** strings_buffer, uint index_buff) {
 	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 	
-	#if VALIDATION_RUN
+	#if PHASE==0
 	// Reinit the PLLs to print results
 	xosc_init();
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
@@ -74,9 +105,10 @@ void iteration_end(char** strings_buffer, uint index_buff) {
 		printf(strings_buffer[i]);
 	}
 	
-	watchdog_hw->scratch[1] += 1;
 	#endif
 	
+	watchdog_hw->scratch[1] += 1; // Next iteration
+
 	// End of iteration, reset the board
 	watchdog_hw->scratch[0] = RESET_VAL;
 	watchdog_reboot(0, 0, 0);
@@ -106,10 +138,10 @@ uint compute_primes(uint start, uint end) {
 uint8_t benchmark_prime(uint benchmark_size) {
 	volatile uint cpt = compute_primes(2, benchmark_size);
 	uint8_t correct = 1;
-	if(benchmark_size == 200 && cpt != CORRECT_PRIME_200) {
+	if(benchmark_size == 200 && cpt != CORRECT_PRIME_LPOSC) {
 		correct = 0;
 	}
-	if(benchmark_size == 5000 && cpt != CORRECT_PRIME_5000) {
+	if(benchmark_size == 5000 && cpt != CORRECT_PRIME) {
 		correct = 0;
 	}
 	return correct;
@@ -130,10 +162,10 @@ uint8_t benchmark_prime_multicores(uint benchmark_size) {
 	uint cpt_core0 = compute_primes(2, benchmark_size/2);
 	uint cpt_core1 = multicore_fifo_pop_blocking();
 	uint8_t correct = 1;
-	if(benchmark_size == 200 && cpt_core0 + cpt_core1 != CORRECT_PRIME_200) {
+	if(benchmark_size == 200 && cpt_core0 + cpt_core1 != CORRECT_PRIME_LPOSC) {
 		correct = 0;
 	}
-	if(benchmark_size == 5000 && cpt_core0 + cpt_core1 != CORRECT_PRIME_5000) {
+	if(benchmark_size == 5000 && cpt_core0 + cpt_core1 != CORRECT_PRIME) {
 		correct = 0;
 	}
 	return correct;
@@ -298,47 +330,82 @@ void restart_all_ticks(void) {
 	start_all_ticks();
 }
 
-void leverage_clock_source_lposc() {
-	// lposc frequency varies according to voltage and temperature. Its frequency needs to be counted before switching clock ref
-	// XOSC needs to be on the clk_ref to accurately count the frequency
+void leverage_clock_source_lposc(uint trim) {
+	// Put xosc as clk_ref to count rosc frequency
 	xosc_init();
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
 	restart_all_ticks();
 	
+	// Specify lposc frequency
+	powman_clear_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS);
+	powman_set_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS & trim);
+	
+	// Count lposc frequency then put it as clk_ref and clk_sys
 	uint lposc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_LPOSC_CLKSRC)*KHZ;
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_LPOSC_CLKSRC, 0, lposc_freq);
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, lposc_freq);
-	clock_configure(clk_peri,
-									0,
-									CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS,
-									lposc_freq,
-									lposc_freq);
 	TIME_RATE = ((float)lposc_freq)/((float)1*MHZ); // LPOSC isn't fast enough to generate the 1us tick (hardwired value). The TIME_RATE divides any active wait to account for this slowness
 	restart_all_ticks();
+	
+	// Disable unused clock sources
 	pll_deinit(pll_sys);
 	pll_deinit(pll_usb);
 	rosc_disable();
 	xosc_disable();
 }
 
-void leverage_clock_source_rosc() {
+void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb) {
 	rosc_enable();
+	
+	// Put xosc as clk_ref to count rosc frequency
 	xosc_init();
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
 	restart_all_ticks();
+	
+	// Specify rosc frequency
+	rosc_set_div(div);
+	rosc_set_range(range);
+	rosc_write(&rosc_hw->freqa, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | freqa);
+	rosc_write(&rosc_hw->freqb, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | freqb);
+	
+	// Count rosc frequency then put it as clk_ref and clk_sys
 	uint rosc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC_PH);
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, rosc_freq);
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_ROSC_CLKSRC, rosc_freq);
-	clock_configure(clk_peri, 0, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS, rosc_freq, rosc_freq);
 	restart_all_ticks();
+	
+	// Disable unused clock sources
 	pll_deinit(pll_sys);
 	pll_deinit(pll_usb);
 	xosc_disable();
 }
 
-uint8_t execute_benchmarks(uint bench_noop_size, uint bench_prime_size, uint bench_multi_size, uint bench_mat_size, uint bench_mat_float_size, uint bench_mat_double_size, uint nb_iteration_mat_mul) {
+void leverage_clock_source_xosc() {
+	xosc_init();
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+	restart_all_ticks();
+	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_XOSC_CLKSRC, XOSC_HZ);
+	pll_deinit(pll_sys);
+	pll_deinit(pll_usb);
+	rosc_disable();
+}
+
+void leverage_clock_source_pll(uint vco_freq, uint div1, uint div2) {
+	xosc_init();
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+	restart_all_ticks();
+	pll_init(pll_sys, PLL_SYS_REFDIV, vco_freq, div1, div2);
+	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, XOSC_HZ);
+	restart_all_ticks();
+	pll_deinit(pll_usb);
+	rosc_disable();
+}
+
+uint8_t execute_benchmarks(bool clock_source_lposc) {
+	uint bench_prime_size = clock_source_lposc ? BENCH_PRIME_SIZE_LPOSC : BENCH_PRIME_SIZE;
+	uint nb_iteration_mat_mul = clock_source_lposc ? NB_ITERATIONS_MAT_MUL_LPOSC : NB_ITERATIONS_MAT_MUL;
 	gpio_put(expe_pin, 1);
-	benchmark_noop(bench_noop_size); // Uses one CPU core
+	benchmark_noop(BENCH_NOOP_SIZE); // Uses one CPU core
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
 	gpio_put(expe_pin, 1);
@@ -346,21 +413,20 @@ uint8_t execute_benchmarks(uint bench_noop_size, uint bench_prime_size, uint ben
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
 	gpio_put(expe_pin, 1);
-	uint8_t result_multicores = benchmark_prime_multicores(bench_multi_size); // Uses both cores
+	uint8_t result_multicores = benchmark_prime_multicores(bench_prime_size); // Uses both cores
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
 	gpio_put(expe_pin, 1);
-	uint8_t result_mat_mul = benchmark_mat_mul(bench_mat_size, nb_iteration_mat_mul); // Uses RAM
+	uint8_t result_mat_mul = benchmark_mat_mul(BENCH_MAT_SIZE, nb_iteration_mat_mul); // Uses RAM
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
 	gpio_put(expe_pin, 1);
-	uint8_t result_mat_mul_float = benchmark_mat_mul_float(bench_mat_float_size, nb_iteration_mat_mul); // Uses float co-processor
+	uint8_t result_mat_mul_float = benchmark_mat_mul_float(BENCH_MAT_FLOAT_SIZE, nb_iteration_mat_mul); // Uses float co-processor
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
 	gpio_put(expe_pin, 1);
-	uint8_t result_mat_mul_double = benchmark_mat_mul_double(bench_mat_double_size, nb_iteration_mat_mul); // Uses double co-processor
+	uint8_t result_mat_mul_double = benchmark_mat_mul_double(BENCH_MAT_DOUBLE_SIZE, nb_iteration_mat_mul); // Uses double co-processor
 	gpio_put(expe_pin, 0);
-	//return 1;
 	return result_prime|result_multicores<<1|result_mat_mul<<2|result_mat_mul_float<<3|result_mat_mul_double<<4;
 }
 
@@ -373,4 +439,11 @@ void led_blink(uint count) {
 		gpio_put(PICO_DEFAULT_LED_PIN, 0);
 		sleep_us((int)(250000*TIME_RATE));
 	}
+}
+
+void log_experiment_result(const char * format, ...) {
+	va_list args;
+	va_start(args, format);
+	sprintf(strings_buffer[index_buff++], format, args);
+  va_end(args);
 }
