@@ -17,7 +17,7 @@
 
 // Experiment parameters
 #define TARGET_VOLTAGE VREG_VOLTAGE_0_75
-#define TARGET_LPOSC_TRIM 0x3f0
+#define TARGET_LPOSC_TRIM 0x000003f0
 
 #define VALIDATION_RUN 1
 

@@ -2,6 +2,7 @@ library("ggplot2")
 library("dplyr")
 library(rlang)
 
+voltage <- 5.2
 df <- read.csv("lposc_benchmarks.csv")
 df <- df %>%
   mutate(
@@ -9,7 +10,7 @@ df <- df %>%
       expe_num,
       breaks = c(0, 15, 30),   # upper bound is exclusive by default
       right = FALSE,              # [0,15), [15,30), ...
-      labels = c("non trimmed", "trimmed")
+      labels = c("Not trimmed", "Trimmed")
     )
   )
 df <- df %>%
@@ -20,17 +21,15 @@ df <- df %>%
       expe_num %in% c(10:14, 25:29) ~ "0.75V"
     )
   )
+df$legend_group <- factor(df$legend_group, levels=c("1.1V (default)", "0.9V", "0.75V"))
 df <- df %>% filter(iteration_num == 0)
-p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=legend_group, group=factor(expe_num))) +
+p <- ggplot(df, aes(x = current_timestamp, y = current_sample*voltage, color=legend_group, group=factor(expe_num))) +
 	geom_line(na.rm = TRUE) +
-	scale_y_continuous(limits=c(0.4, 1.4), n.breaks=15) +
-	geom_hline(yintercept = median(df[df$expe_num == 0,]$current_sample, na.rm = TRUE), color = "red") +
-	geom_hline(yintercept = median(df[df$expe_num == 5,]$current_sample, na.rm = TRUE), color = "red") +
-	geom_hline(yintercept = median(df[df$expe_num == 10,]$current_sample, na.rm = TRUE), color = "red") +
+	scale_y_continuous(limits=c(2.5, 6), n.breaks=15) +
 	facet_wrap(~ x_range) +
-	labs(title = "Running all 5 benchmarks one after the other (prime, prime multicore, \nmat mul int, mat mul float, mat mul double)", x = "Timestamp in seconds", y = "Current sample in mA") +
+	labs(title = "", x = "Time (seconds)", y = "Power (mW)") +
   scale_color_manual(
-		name = "Configuration",
+		name = "VREG output",
     values = c(
       "1.1V (default)"      = "black",
       "0.9V"                = "purple",
