@@ -13,12 +13,6 @@
 #include "hardware/vreg.h"
 #include "hardware/powman.h"
 
-// Default values
-#define ROSC_DEFAULT_DIVIDER 8
-#define ROSC_DEFAULT_DRIVE_STRENGTH 0
-#define ROSC_DEFAULT_RANGE ROSC_CTRL_FREQ_RANGE_VALUE_LOW
-#define LPOSC_DEFAULT_TRIM 0
-
 // Benchmark sizes
 #define BENCH_NOOP_SIZE 10
 #define BENCH_PRIME_SIZE 5000
@@ -62,7 +56,7 @@ void iteration_init(uint nb_expes) {
 	
 	#if PHASE==0
 	// Initialise buffer to store experiment results
-	strings_buffer = malloc(sizeof(char*) * nb_expes)
+	strings_buffer = malloc(sizeof(char*) * nb_expes);
 	for (int i = 0; i < nb_expes; i++) {
 		strings_buffer[i] = malloc(LINE_SIZE);
 	}
@@ -82,7 +76,7 @@ void iteration_init(uint nb_expes) {
 	powman_clear_bits(&powman_hw->bod, 0x000001f1);
 }
 
-void iteration_end(char** strings_buffer, uint index_buff) {
+void iteration_end() {
 	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 	
 	#if PHASE==0
@@ -402,6 +396,8 @@ void leverage_clock_source_pll(uint vco_freq, uint div1, uint div2) {
 }
 
 uint8_t execute_benchmarks(bool clock_source_lposc) {
+	// Sleep 10 seconds before starting benchmarks
+	sleep_us((int)(10*US*TIME_RATE));
 	uint bench_prime_size = clock_source_lposc ? BENCH_PRIME_SIZE_LPOSC : BENCH_PRIME_SIZE;
 	uint nb_iteration_mat_mul = clock_source_lposc ? NB_ITERATIONS_MAT_MUL_LPOSC : NB_ITERATIONS_MAT_MUL;
 	gpio_put(expe_pin, 1);
