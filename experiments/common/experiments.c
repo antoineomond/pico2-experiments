@@ -39,12 +39,10 @@ const uint LINE_SIZE = 50;
 const int expe_pin = 11;
 float TIME_RATE = 1;
 
-// Temporary buffer to store experiment results
-uint index_buff = 0;
-char** strings_buffer;
+// Buffer to store experiment results
+char* buffer;
 
-
-void iteration_init(uint nb_expes) {
+void iteration_init() {
 	sleep_ms(100); // For unknown reason, not sleeping here sometimes makes firmware upload using SWD to fail
 	
 	// Set GPIO pin to advertise experiments start and end, and puts it to low
@@ -56,10 +54,7 @@ void iteration_init(uint nb_expes) {
 	
 	#if PHASE==0
 	// Initialise buffer to store experiment results
-	strings_buffer = malloc(sizeof(char*) * nb_expes);
-	for (int i = 0; i < nb_expes; i++) {
-		strings_buffer[i] = malloc(LINE_SIZE);
-	}
+	buffer = malloc(sizeof(char*)*LINE_SIZE);
 	#else
 	if(watchdog_hw->scratch[0] != RESET_VAL) {
 		// Leave 10sec window to unplug the SWD before resetting the board (required because the SWD sub-system doesn't deactivate automatically once SWD is unplugged (3.5.1. of datasheet))
@@ -94,11 +89,7 @@ void iteration_end() {
 	
 	stdio_init_all();
 	sleep_ms(1000);
-	
-	for (int i = 0; i < index_buff; i++) {
-		printf(strings_buffer[i]);
-	}
-	
+	printf("%s", buffer);
 	#endif
 	
 	watchdog_hw->scratch[1] += 1; // Next iteration
@@ -379,6 +370,8 @@ void leverage_clock_source_xosc() {
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
 	restart_all_ticks();
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_XOSC_CLKSRC, XOSC_HZ);
+	
+	// Disable unused clock sources
 	pll_deinit(pll_sys);
 	pll_deinit(pll_usb);
 	rosc_disable();
@@ -390,7 +383,8 @@ void leverage_clock_source_pll(uint vco_freq, uint div1, uint div2) {
 	restart_all_ticks();
 	pll_init(pll_sys, PLL_SYS_REFDIV, vco_freq, div1, div2);
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, XOSC_HZ);
-	restart_all_ticks();
+	
+	// Disable unused clock sources
 	pll_deinit(pll_usb);
 	rosc_disable();
 }
@@ -440,6 +434,6 @@ void led_blink(uint count) {
 void log_experiment_result(const char * format, ...) {
 	va_list args;
 	va_start(args, format);
-	sprintf(strings_buffer[index_buff++], format, args);
+	sprintf(buffer, format, args);
   va_end(args);
 }
