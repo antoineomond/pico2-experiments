@@ -46,9 +46,9 @@ struct params {
 	
 	// ROSC
   uint rosc_div;
-  uint rosc_drive_strength;
-  uint rosc_range_freqa;
-  uint rosc_range_freqb;
+  uint rosc_range;
+  uint rosc_drive_freqa;
+  uint rosc_drive_freqb;
 	
 	// LPOSC
 	uint lposc_trim;
@@ -57,8 +57,8 @@ struct params {
 	uint vreg_output;
 };
 
-void iteration_init();
-void iteration_end();
+void iteration_init(uint phase);
+void iteration_end(uint phase, char* buffer);
 
 uint8_t benchmark_noop(uint benchmark_size);
 uint8_t benchmark_prime(uint benchmark_size);
@@ -69,8 +69,8 @@ uint8_t benchmark_mat_mul_double(uint benchmark_size, uint nb_iteration_mat_mul)
 uint8_t execute_benchmarks(bool clock_source_lposc);
 
 // Clock source leverages
-void leverage_clock_source_lposc(uint trim);
-void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb);
+void leverage_clock_source_lposc(uint trim, uint* clock_freq);
+void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb, uint* clock_freq);
 void leverage_clock_source_xosc();
 void leverage_clock_source_pll(uint vco_freq, uint div1, uint div2);
 void restart_all_ticks(void);
@@ -85,4 +85,3 @@ void processor_deep_sleep(void);
 
 // Others
 void led_blink(uint count);
-void log_experiment_result(const char * format, ...);

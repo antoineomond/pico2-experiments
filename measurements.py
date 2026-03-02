@@ -6,6 +6,7 @@ import adafruit_ina228
 import pigpio
 from statistics import StatisticsError, mean, stdev, median
 
+NB_BENCHMARKS = 6
 DEADLINE_ITERATION = 300
 EXPE_PIN = 27
 expe_num = 0
@@ -36,6 +37,7 @@ def next_expe(user_gpio, level, tick):
     if(level == 1):
         if(init == 0):
             start_time = time.time() 
+            ina228.reset_accumulators()
         init = 1
         started = 1
         deadline = time.time()
@@ -48,6 +50,8 @@ def next_expe(user_gpio, level, tick):
         timing_samples.append(t)
         started = 0
         expe_num += 1
+        if(expe_num%NB_BENCHMARKS == 0):
+            init = 0
         if(expe_num >= nb_expes*nb_iter):
              done = 1
         print(expe_num)
@@ -77,13 +81,13 @@ current_samples = [[] for _ in range(nb_expes*nb_iter)]
 live_samples = [[] for _ in range(nb_expes*nb_iter)]
 print("Sampling starts")
 while not done and (time.time() - deadline) < DEADLINE_ITERATION:
-    val = ina228.current*1000
-    if started:  # only measure current when expe starts 
-        current_samples[expe_num].append((val, round(time.time()-start_time, 3)))
+    if started and expe_num < nb_expes*nb_iter:  # only measure current when expe starts 
+        current_val = ina228.current*1000
+        current_samples[expe_num].append((current_val, ina228.power*1000, ina228.energy*1000, ina228.shunt_voltage, ina228.bus_voltage, round(time.time()-start_time, 3)))
         if live:
-            live_samples[expe_num].append(val)
+            live_samples[expe_num].append(current_val)
             try:
-                print(f"{val:.3f}, mean: {mean(live_samples[expe_num]):.3f}, std: {stdev(live_samples[expe_num]):.3f}, median: {median(live_samples[expe_num]):.3f}, max: {max(live_samples[expe_num]):.3f}, min: {min(live_samples[expe_num]):.3f}")
+                print(f"{current_val:.3f}, mean: {mean(live_samples[expe_num]):.3f}, std: {stdev(live_samples[expe_num]):.3f}, median: {median(live_samples[expe_num]):.3f}, max: {max(live_samples[expe_num]):.3f}, min: {min(live_samples[expe_num]):.3f}")
             # In case race condition of expe_num (empty array not accepted in statistics functions)
             except StatisticsError:
                 pass
@@ -95,11 +99,11 @@ while not done and (time.time() - deadline) < DEADLINE_ITERATION:
 print("Sampling ends")
 result_file = "results.csv"
 with open(result_file, "w") as f:
-    f.write("iteration_num,expe_num,validation_result,clock_freq,current_sample,current_timestamp,timing_sample\n")
+    f.write("iteration_num,expe_num,validation_result,clock_freq,current_sample,power_sample,energy_sample,shunt_voltage_sample,bus_voltage_sample,current_timestamp,timing_sample\n")
     for expe_num, samples in enumerate(current_samples):
         for current_sample in samples:
-            current, timestamp = current_sample
-            f.write(f"{expe_num//nb_expes},{expe_num%nb_expes+offset},,,{current},{timestamp},\n")
+            current, power, energy, shunt_voltage, bus_voltage, timestamp = current_sample
+            f.write(f"{expe_num//nb_expes},{expe_num%nb_expes+offset},,,{current},{power},{energy},{shunt_voltage},{bus_voltage},{timestamp},\n")
     for expe_num, timing_sample in enumerate(timing_samples):
-        f.write(f"{expe_num//nb_expes},{expe_num%nb_expes+offset},,,,,{timing_sample}\n")
+        f.write(f"{expe_num//nb_expes},{expe_num%nb_expes+offset},,,,,,,,,{timing_sample}\n")
 print("Done")

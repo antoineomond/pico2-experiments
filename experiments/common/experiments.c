@@ -34,15 +34,11 @@
 // Constants
 const uint US = 1000000;
 const uint32_t RESET_VAL = 0xDEADBEEF; 
-const uint LINE_SIZE = 50;
 
 const int expe_pin = 11;
 float TIME_RATE = 1;
 
-// Buffer to store experiment results
-char* buffer;
-
-void iteration_init() {
+void iteration_init(uint phase) {
 	sleep_ms(100); // For unknown reason, not sleeping here sometimes makes firmware upload using SWD to fail
 	
 	// Set GPIO pin to advertise experiments start and end, and puts it to low
@@ -52,45 +48,42 @@ void iteration_init() {
 		watchdog_hw->scratch[1] = 0; // Iteration num
 	}
 	
-	#if PHASE==0
-	// Initialise buffer to store experiment results
-	buffer = malloc(sizeof(char*)*LINE_SIZE);
-	#else
-	if(watchdog_hw->scratch[0] != RESET_VAL) {
-		// Leave 10sec window to unplug the SWD before resetting the board (required because the SWD sub-system doesn't deactivate automatically once SWD is unplugged (3.5.1. of datasheet))
-		sleep_ms(10000); 
-		// Scratch values survive between reboots between reboots
-		watchdog_hw->scratch[0] = RESET_VAL;
-		watchdog_reboot(0, 0, 0);
+	if(phase==1) {
+		if(watchdog_hw->scratch[0] != RESET_VAL) {
+			// Leave 10sec window to unplug the SWD before resetting the board (required because the SWD sub-system doesn't deactivate automatically once SWD is unplugged (3.5.1. of datasheet))
+			sleep_ms(10000); 
+			// Scratch values survive between reboots between reboots
+			watchdog_hw->scratch[0] = RESET_VAL;
+			watchdog_reboot(0, 0, 0);
+		}
+		pull_down_gpios();
+		turn_off_clocks();
+		disable_usb();
 	}
-	pull_down_gpios();
-	turn_off_clocks();
-	disable_usb();
-	#endif
 	vreg_disable_voltage_limit();
 	powman_clear_bits(&powman_hw->bod, 0x000001f1);
 }
 
-void iteration_end() {
+void iteration_end(uint phase, char* buffer) {
 	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 	
-	#if PHASE==0
-	// Reinit the PLLs to print results
-	xosc_init();
-	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
-	restart_all_ticks();
-	pll_init(pll_sys, PLL_SYS_REFDIV, PLL_SYS_VCO_FREQ_HZ, PLL_SYS_POSTDIV1, PLL_SYS_POSTDIV2);
-	pll_init(pll_usb, PLL_USB_REFDIV, PLL_USB_VCO_FREQ_HZ, PLL_USB_POSTDIV1, PLL_USB_POSTDIV2);
-	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, SYS_CLK_HZ);
-	clock_configure_undivided(clk_peri,
-									0,
-									CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS,
-									SYS_CLK_HZ);
-	
-	stdio_init_all();
-	sleep_ms(1000);
-	printf("%s", buffer);
-	#endif
+	if(phase==0) {
+		// Reinit the PLLs to print results
+		xosc_init();
+		clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+		restart_all_ticks();
+		pll_init(pll_sys, PLL_SYS_REFDIV, PLL_SYS_VCO_FREQ_HZ, PLL_SYS_POSTDIV1, PLL_SYS_POSTDIV2);
+		pll_init(pll_usb, PLL_USB_REFDIV, PLL_USB_VCO_FREQ_HZ, PLL_USB_POSTDIV1, PLL_USB_POSTDIV2);
+		clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, SYS_CLK_HZ);
+		clock_configure_undivided(clk_peri,
+										0,
+										CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS,
+										SYS_CLK_HZ);
+		
+		stdio_init_all();
+		sleep_ms(1000);
+		printf("%s", buffer);
+	}
 	
 	watchdog_hw->scratch[1] += 1; // Next iteration
 
@@ -315,7 +308,7 @@ void restart_all_ticks(void) {
 	start_all_ticks();
 }
 
-void leverage_clock_source_lposc(uint trim) {
+void leverage_clock_source_lposc(uint trim, uint* clock_freq) {
 	// Put xosc as clk_ref to count rosc frequency
 	xosc_init();
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
@@ -327,6 +320,7 @@ void leverage_clock_source_lposc(uint trim) {
 	
 	// Count lposc frequency then put it as clk_ref and clk_sys
 	uint lposc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_LPOSC_CLKSRC)*KHZ;
+	*clock_freq = lposc_freq;
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_LPOSC_CLKSRC, 0, lposc_freq);
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, lposc_freq);
 	TIME_RATE = ((float)lposc_freq)/((float)1*MHZ); // LPOSC isn't fast enough to generate the 1us tick (hardwired value). The TIME_RATE divides any active wait to account for this slowness
@@ -339,7 +333,7 @@ void leverage_clock_source_lposc(uint trim) {
 	xosc_disable();
 }
 
-void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb) {
+void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb, uint* clock_freq) {
 	rosc_enable();
 	
 	// Put xosc as clk_ref to count rosc frequency
@@ -353,8 +347,9 @@ void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb) {
 	rosc_write(&rosc_hw->freqa, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | freqa);
 	rosc_write(&rosc_hw->freqb, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | freqb);
 	
-	// Count rosc frequency then put it as clk_ref and clk_sys
-	uint rosc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC_PH);
+	// Count rosc frequency then put rosc as clk_ref and clk_sys
+	uint rosc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC_PH)*KHZ;
+	*clock_freq = rosc_freq;
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, rosc_freq);
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_ROSC_CLKSRC, rosc_freq);
 	restart_all_ticks();
@@ -429,11 +424,4 @@ void led_blink(uint count) {
 		gpio_put(PICO_DEFAULT_LED_PIN, 0);
 		sleep_us((int)(250000*TIME_RATE));
 	}
-}
-
-void log_experiment_result(const char * format, ...) {
-	va_list args;
-	va_start(args, format);
-	sprintf(buffer, format, args);
-  va_end(args);
 }

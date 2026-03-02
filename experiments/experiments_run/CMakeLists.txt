@@ -1,5 +1,6 @@
 add_executable(experiments_run
-				params_diff_freqs.c
+				params_baseline.c
+				params_minimums.c
 				params_same_freqs.c
         experiments_run.c)
 target_link_libraries(experiments_run

@@ -1,12 +1,6 @@
 #include "experiments.h"
 
-const struct params expes_diff_freqs[] = {
-	// Baseline
-	{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, PLL_DEFAULT_POSTDIV1, PLL_DEFAULT_POSTDIV2, 0, 0, 0, 0, 0, VREG_DEFAULT},
-	{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_DEFAULT},
-	{ROSC, 0, 0, 0, ROSC_DEFAULT_DIVIDER, ROSC_DEFAULT_RANGE, ROSC_DEFAULT_DRIVE_STRENGTH, ROSC_DEFAULT_DRIVE_STRENGTH, 0, VREG_DEFAULT},
-	{LPOSC, 0, 0, 0, 0, 0, 0, 0, LPOSC_DEFAULT_TRIM, VREG_DEFAULT},
-	
+const struct params expes_minimums[] = {
 	// Min frequency, default voltage
 	{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_DEFAULT},
 	{ROSC, 0, 0, 0, ROSC_MAX_DIVIDER, ROSC_MIN_DRIVE_STRENGTH, ROSC_MIN_DRIVE_STRENGTH, ROSC_MIN_DRIVE_STRENGTH, 0, VREG_DEFAULT},
@@ -24,3 +18,4 @@ const struct params expes_diff_freqs[] = {
 	{ROSC, 0, 0, 0, ROSC_MAX_DIVIDER, ROSC_MIN_DRIVE_STRENGTH, ROSC_MIN_DRIVE_STRENGTH, ROSC_MIN_DRIVE_STRENGTH, 0, VREG_MIN_XOSC_ROSC_LPOSC},
 	{LPOSC, 0, 0, 0, 0, 0, 0, 0, LPOSC_MIN_TRIM, VREG_MIN_XOSC_ROSC_LPOSC},
 };
+const uint size_expes_minimums = sizeof(expes_minimums)/sizeof(expes_minimums[0]);
