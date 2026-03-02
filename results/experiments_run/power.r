@@ -2,7 +2,11 @@ library("ggplot2")
 library("dplyr")
 library(rlang)
 
-df <- read.csv("results.csv")
+pll_freq <- 150000000
+xosc_freq <- 12000000
+rosc_freq <- 10887000
+lposc_freq <- 20000
+df <- read.csv("baseline.csv")
 df <- df %>%
   mutate(
     legend_group = case_when(
@@ -12,9 +16,9 @@ df <- df %>%
       expe_num %in% c(18:23)   ~ "LPOSC"
     )
   )
-p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=legend_group, group=factor(expe_num))) +
+p <- ggplot(df, aes(x = current_timestamp, y = power_sample, color=legend_group, group=factor(expe_num))) +
 	geom_line(na.rm = TRUE) +
-	scale_y_continuous(limits=c(0, 16), n.breaks=15) +
+	scale_y_continuous(limits=c(0, 75), n.breaks=15) +
 	#geom_hline(yintercept = median(df[df$expe_num == 0,]$current_sample, na.rm = TRUE), color = "red") +
 	#facet_wrap(~ x_range) +
 	labs(title = "Running all 5 benchmarks one after the other. \nFor each target frequency, the closest configurations with the lowest \nand highest vreg are selected.", x = "Timestamp in seconds", y = "Current sample in mA") + 
@@ -27,5 +31,5 @@ p <- ggplot(df, aes(x = current_timestamp, y = current_sample, color=legend_grou
       "LPOSC" = "dark green"
     )
   )
-ggsave("baseline.pdf", plot=p)
+ggsave("power.pdf", plot=p)
 

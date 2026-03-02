@@ -352,6 +352,7 @@ void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb, ui
 	*clock_freq = rosc_freq;
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, rosc_freq);
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_ROSC_CLKSRC, rosc_freq);
+	TIME_RATE = ((float)((float)rosc_freq/(float)MHZ))/((float)(rosc_freq/MHZ)); // clk_ref takes clock_freq/MHz as reference to compute time, trimming all remaining KHz. This leads to incorrect time tracking  
 	restart_all_ticks();
 	
 	// Disable unused clock sources
