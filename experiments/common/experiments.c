@@ -17,9 +17,7 @@
 #define BENCH_NOOP_SIZE 10
 #define BENCH_PRIME_SIZE 5000
 #define BENCH_PRIME_SIZE_LPOSC 200
-#define BENCH_MAT_SIZE 72
-#define BENCH_MAT_FLOAT_SIZE 72
-#define BENCH_MAT_DOUBLE_SIZE 36
+#define BENCH_MAT_SIZE 43000
 #define NB_ITERATIONS_MAT_MUL 1000
 #define NB_ITERATIONS_MAT_MUL_LPOSC 1
 
@@ -155,18 +153,18 @@ uint8_t benchmark_mat_mul(uint benchmark_size, uint nb_iteration_mat_mul) {
 	volatile uint8_t correct = 1;
 	for (int k = 0; k < nb_iteration_mat_mul; k++) {
 		// Three 32-bits matrixes of 72 elements account for 486 kB, which should account for all 8 memory banks in SRAM0 and SRAM1
-		uint32_t *A = malloc(sizeof(uint32_t)*benchmark_size*benchmark_size);
-		uint32_t *B = malloc(sizeof(uint32_t)*benchmark_size*benchmark_size);
-		uint32_t *C = malloc(sizeof(uint32_t)*benchmark_size*benchmark_size);
-		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
+		uint32_t *A = malloc(sizeof(uint32_t)*benchmark_size);
+		uint32_t *B = malloc(sizeof(uint32_t)*benchmark_size);
+		uint32_t *C = malloc(sizeof(uint32_t)*benchmark_size);
+		for (int i = 0; i < benchmark_size; i++) {
 			A[i] = A_value;
 			B[i] = B_value;
 		}
-		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
+		for (int i = 0; i < benchmark_size; i++) {
 			C[i] = A[i] * B[i] - 1;
 		}
 		// Verification
-		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
+		for (int i = 0; i < benchmark_size; i++) {
 			if(C[i] != CORRECT_MAT_MUL) {
 				correct = 0;
 			}
@@ -184,18 +182,18 @@ uint8_t benchmark_mat_mul_float(uint benchmark_size, uint nb_iteration_mat_mul) 
 	volatile uint8_t correct = 1;
 	for (int k = 0; k < nb_iteration_mat_mul; k++) {
 		// Three 32-bits matrixes of 72 elements account for 486 kB, which should account for all 8 memory banks in SRAM0 and SRAM1
-		float *A = malloc(sizeof(float)*benchmark_size*benchmark_size);
-		float *B = malloc(sizeof(float)*benchmark_size*benchmark_size);
-		float *C = malloc(sizeof(float)*benchmark_size*benchmark_size);
-		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
+		float *A = malloc(sizeof(float)*benchmark_size);
+		float *B = malloc(sizeof(float)*benchmark_size);
+		float *C = malloc(sizeof(float)*benchmark_size);
+		for (int i = 0; i < benchmark_size; i++) {
 			A[i] = A_value;
 			B[i] = B_value;
 		}
-		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
+		for (int i = 0; i < benchmark_size; i++) {
 			C[i] = A[i] * B[i] - 1;
 		}
 		// Verification
-		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
+		for (int i = 0; i < benchmark_size; i++) {
 			if(C[i] > CORRECT_MAT_MUL_FLOAT_UPPER || C[i] < CORRECT_MAT_MUL_FLOAT_LOWER) {
 				correct = 0;
 			}
@@ -213,18 +211,18 @@ uint8_t benchmark_mat_mul_double(uint benchmark_size, uint nb_iteration_mat_mul)
 	volatile uint8_t correct = 1;
 	for (int k = 0; k < nb_iteration_mat_mul; k++) {
 		// Three 32-bits matrixes of 72 elements account for 486 kB, which should account for all 8 memory banks in SRAM0 and SRAM1
-		double *A = malloc(sizeof(double)*benchmark_size*benchmark_size);
-		double *B = malloc(sizeof(double)*benchmark_size*benchmark_size);
-		double *C = malloc(sizeof(double)*benchmark_size*benchmark_size);
-		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
+		double *A = malloc(sizeof(double)*benchmark_size);
+		double *B = malloc(sizeof(double)*benchmark_size);
+		double *C = malloc(sizeof(double)*benchmark_size);
+		for (int i = 0; i < benchmark_size; i++) {
 			A[i] = A_value;
 			B[i] = B_value;
 		}
-		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
+		for (int i = 0; i < benchmark_size; i++) {
 			C[i] = A[i] * B[i] - 1;
 		}
 		// Verification
-		for (int i = 0; i < benchmark_size*benchmark_size; i++) {
+		for (int i = 0; i < benchmark_size; i++) {
 			if((double)C[i] != CORRECT_MAT_MUL_DOUBLE) {
 				correct = 0;
 			}
@@ -407,11 +405,11 @@ uint8_t execute_benchmarks(bool clock_source_lposc) {
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
 	gpio_put(expe_pin, 1);
-	uint8_t result_mat_mul_float = benchmark_mat_mul_float(BENCH_MAT_FLOAT_SIZE, nb_iteration_mat_mul); // Uses float co-processor
+	uint8_t result_mat_mul_float = benchmark_mat_mul_float(BENCH_MAT_SIZE, nb_iteration_mat_mul); // Uses float co-processor
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
 	gpio_put(expe_pin, 1);
-	uint8_t result_mat_mul_double = benchmark_mat_mul_double(BENCH_MAT_DOUBLE_SIZE, nb_iteration_mat_mul); // Uses double co-processor
+	uint8_t result_mat_mul_double = benchmark_mat_mul_double(BENCH_MAT_SIZE/2, nb_iteration_mat_mul); // Uses double co-processor
 	gpio_put(expe_pin, 0);
 	return result_prime|result_multicores<<1|result_mat_mul<<2|result_mat_mul_float<<3|result_mat_mul_double<<4;
 }

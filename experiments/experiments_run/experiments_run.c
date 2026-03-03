@@ -4,7 +4,7 @@
 // Select experiments and phase to run
 #define EXPES_PARAMS expes_baseline
 #define NB_EXPES size_expes_baseline
-#define PHASE 1
+#define PHASE 0
 #define LINE_SIZE 50
 
 extern const struct params expes_baseline[];
