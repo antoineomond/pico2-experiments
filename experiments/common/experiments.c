@@ -18,7 +18,7 @@
 #define BENCH_PRIME_SIZE 5000
 #define BENCH_PRIME_SIZE_LPOSC 200
 #define BENCH_MAT_SIZE 43000
-#define NB_ITERATIONS_MAT_MUL 1000
+#define NB_ITERATIONS_MAT_MUL 1
 #define NB_ITERATIONS_MAT_MUL_LPOSC 1
 
 // Benchmark correct results
@@ -306,7 +306,7 @@ void restart_all_ticks(void) {
 	start_all_ticks();
 }
 
-void leverage_clock_source_lposc(uint trim, uint* clock_freq) {
+void leverage_clock_source_lposc(uint trim, uint* clock_freq, bool set_as_ref) {
 	// Put xosc as clk_ref to count rosc frequency
 	xosc_init();
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
@@ -319,19 +319,23 @@ void leverage_clock_source_lposc(uint trim, uint* clock_freq) {
 	// Count lposc frequency then put it as clk_ref and clk_sys
 	uint lposc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_LPOSC_CLKSRC)*KHZ;
 	*clock_freq = lposc_freq;
-	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_LPOSC_CLKSRC, 0, lposc_freq);
+	if(set_as_ref) {
+		clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_LPOSC_CLKSRC, 0, lposc_freq);
+		restart_all_ticks();
+		TIME_RATE = ((float)lposc_freq)/((float)1*MHZ); // LPOSC isn't fast enough to generate the 1us tick (hardwired value). The TIME_RATE divides any active wait to account for this slowness
+	}
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, lposc_freq);
-	TIME_RATE = ((float)lposc_freq)/((float)1*MHZ); // LPOSC isn't fast enough to generate the 1us tick (hardwired value). The TIME_RATE divides any active wait to account for this slowness
-	restart_all_ticks();
 	
 	// Disable unused clock sources
 	pll_deinit(pll_sys);
 	pll_deinit(pll_usb);
 	rosc_disable();
-	xosc_disable();
+	if(set_as_ref) {
+		xosc_disable();
+	}
 }
 
-void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb, uint* clock_freq) {
+void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb, uint* clock_freq, bool set_as_ref) {
 	rosc_enable();
 	
 	// Put xosc as clk_ref to count rosc frequency
@@ -348,15 +352,19 @@ void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb, ui
 	// Count rosc frequency then put rosc as clk_ref and clk_sys
 	uint rosc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC_PH)*KHZ;
 	*clock_freq = rosc_freq;
-	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, rosc_freq);
+	if(set_as_ref) {
+		clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, rosc_freq);
+		restart_all_ticks();
+		TIME_RATE = ((float)((float)rosc_freq/(float)MHZ))/((float)(rosc_freq/MHZ)); // clk_ref takes clock_freq/MHz as reference to compute time, trimming all remaining KHz. This leads to incorrect time tracking  
+	}
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_ROSC_CLKSRC, rosc_freq);
-	TIME_RATE = ((float)((float)rosc_freq/(float)MHZ))/((float)(rosc_freq/MHZ)); // clk_ref takes clock_freq/MHz as reference to compute time, trimming all remaining KHz. This leads to incorrect time tracking  
-	restart_all_ticks();
 	
 	// Disable unused clock sources
 	pll_deinit(pll_sys);
 	pll_deinit(pll_usb);
-	xosc_disable();
+	if(set_as_ref) {
+		xosc_disable();
+	}
 }
 
 void leverage_clock_source_xosc() {

@@ -55,6 +55,9 @@ struct params {
 	
 	// VREG output
 	uint vreg_output;
+	
+	// Set clock source as reference clock
+	bool set_as_ref;
 };
 
 void iteration_init(uint phase);
@@ -69,8 +72,8 @@ uint8_t benchmark_mat_mul_double(uint benchmark_size, uint nb_iteration_mat_mul)
 uint8_t execute_benchmarks(bool clock_source_lposc);
 
 // Clock source leverages
-void leverage_clock_source_lposc(uint trim, uint* clock_freq);
-void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb, uint* clock_freq);
+void leverage_clock_source_lposc(uint trim, uint* clock_freq, bool set_as_ref);
+void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb, uint* clock_freq, bool set_as_ref);
 void leverage_clock_source_xosc();
 void leverage_clock_source_pll(uint vco_freq, uint div1, uint div2);
 void restart_all_ticks(void);

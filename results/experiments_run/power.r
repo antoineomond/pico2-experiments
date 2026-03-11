@@ -6,7 +6,7 @@ pll_freq <- 150000000
 xosc_freq <- 12000000
 rosc_freq <- 10887000
 lposc_freq <- 20000
-df <- read.csv("baseline.csv")
+df <- read.csv("results_no_ref.csv")
 df <- df %>%
   mutate(
     legend_group = case_when(
@@ -31,5 +31,8 @@ p <- ggplot(df, aes(x = current_timestamp, y = power_sample, color=legend_group,
       "LPOSC" = "dark green"
     )
   )
-ggsave("power.pdf", plot=p)
+ggsave("power_no_ref.pdf", plot=p)
 
+df %>%
+	group_by(legend_group) %>%
+	summarise(median = median(power_sample, na.rm = TRUE))
