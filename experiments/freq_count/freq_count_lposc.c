@@ -9,6 +9,7 @@
 #include "hardware/pll.h"
 #include "hardware/powman.h"
 #include <string.h>
+#include "hardware/watchdog.h"
 
 #define BUFF_LEN 500
 #define LINE_SIZE 50
@@ -68,36 +69,41 @@ void printf_buffer() {
 
 int main() {
 	strings_buffer = malloc(sizeof(char[LINE_SIZE][BUFF_LEN]));
+	const uint nb_iterations = 10;
 	const uint trims[5] = {
-		0x000, 0x100, 0x200, 0x300, 0x3f0,
+		0x00, 0x10, 0x20, 0x30, 0x3f
 	};
 	const uint vregs[8] = {
 		VREG_VOLTAGE_1_10, VREG_VOLTAGE_1_05, VREG_VOLTAGE_1_00, VREG_VOLTAGE_0_95, VREG_VOLTAGE_0_90, VREG_VOLTAGE_0_85, VREG_VOLTAGE_0_80, VREG_VOLTAGE_0_75
 	};
+	// In order to reach VREG output lower that 0.90V, the plls must be turned off
 	turn_off_plls();
 	
 	vreg_disable_voltage_limit();
 	powman_clear_bits(&powman_hw->bod, 0x000001f1);
 	
 	printf("clock_source,vreg,trim,clock_freq\n");
-	for (int vreg_index = 0; vreg_index < sizeof(vregs)/sizeof(vregs[0]); vreg_index++) {
-		for (int trim_index = 0; trim_index < sizeof(trims)/sizeof(trims[0]); trim_index++) {
-			vreg_set_voltage(vregs[vreg_index]);
-			sleep_ms(100);
+	for (int iteration = 0; iteration < nb_iterations; iteration++) {
+		for (int vreg_index = 0; vreg_index < sizeof(vregs)/sizeof(vregs[0]); vreg_index++) {
+			for (int trim_index = 0; trim_index < sizeof(trims)/sizeof(trims[0]); trim_index++) {
+				vreg_set_voltage(vregs[vreg_index]);
+				sleep_ms(100);
 			
-			powman_clear_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS);
-			powman_set_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS & trims[trim_index]);
-			uint lposc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_LPOSC_CLKSRC)*KHZ;
-			sleep_ms(100);
-			
-			sprintf(strings_buffer[index_strings++], "lposc,%.2d,%.3x,%d\n", vregs[vreg_index], trims[trim_index], lposc_freq);
-			if(index_strings >= BUFF_LEN) {
-				printf_buffer();
+				powman_clear_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS);
+				powman_set_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS & (trims[trim_index] << POWMAN_LPOSC_TRIM_LSB));
+				sleep_ms(1000);
+				uint lposc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_LPOSC_CLKSRC)*KHZ;
+				
+				sprintf(strings_buffer[index_strings++], "%d,lposc,%.2d,%.3x,%d\n", iteration, vregs[vreg_index], trims[trim_index], lposc_freq);
+				if(index_strings >= BUFF_LEN) {
+					printf_buffer();
+				}
 			}
 		}
 	}
 	printf_buffer();
 	
+	watchdog_reboot(0, 0, 0);
 	while(true){
 		sleep_ms(1000);
 	}

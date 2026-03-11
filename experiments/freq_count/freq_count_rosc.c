@@ -12,7 +12,7 @@
 
 #define LOW_VREG_EXPES 0
 #define MAX_DIVIDER 31
-#define BUFF_LEN 500
+#define BUFF_LEN 5000
 #define LINE_SIZE 50
 
 void turn_off_plls() {
@@ -70,12 +70,16 @@ void printf_buffer() {
 
 int main() {
 	strings_buffer = malloc(sizeof(char[LINE_SIZE][BUFF_LEN]));
+	const uint nb_iterations = 30;
 	const uint ranges[4] = {ROSC_CTRL_FREQ_RANGE_VALUE_LOW, ROSC_CTRL_FREQ_RANGE_VALUE_MEDIUM, ROSC_CTRL_FREQ_RANGE_VALUE_HIGH, ROSC_CTRL_FREQ_RANGE_VALUE_TOOHIGH};
-	const uint codes[16] = {
-		0x00000001, 0x00000003, 0x00000005, 0x00000007,
-		0x00000017, 0x00000037, 0x00000057, 0x00000077,
-		0x00000177, 0x00000377, 0x00000577, 0x00000777,
-		0x00001777, 0x00003777, 0x00005777, 0x00007777,
+	//const uint codes[16] = {
+	//	0x00000001, 0x00000003, 0x00000005, 0x00000007,
+	//	0x00000017, 0x00000037, 0x00000057, 0x00000077,
+	//	0x00000177, 0x00000377, 0x00000577, 0x00000777,
+	//	0x00001777, 0x00003777, 0x00005777, 0x00007777,
+	//};
+	const uint codes[4] = {
+		0x00000007, 0x00000077, 0x00000777, 0x00007777,
 	};
 	#if LOW_VREG_EXPES
 	const uint vregs[3] = {
@@ -94,30 +98,32 @@ int main() {
 	vreg_disable_voltage_limit();
 	powman_clear_bits(&powman_hw->bod, 0x000001f1);
 	
-	printf("clock_source,vreg,divider,range,freqa,freqb,clock_freq\n");
-	for (int vreg_index = 0; vreg_index < sizeof(vregs)/sizeof(vregs[0]); vreg_index++) {
-		for (int divider = 1; divider < MAX_DIVIDER; divider++) {
-			for (int range_index = 0; range_index < sizeof(ranges)/sizeof(ranges[0]); range_index++) {
-				for (int freqa_code_index = 0; freqa_code_index < sizeof(codes)/sizeof(codes[0]); freqa_code_index++) {
-					for (int freqb_code_index = 0; freqb_code_index < sizeof(codes)/sizeof(codes[0]); freqb_code_index++) {
-						vreg_set_voltage(vregs[vreg_index]);
-						sleep_ms(10);
-						
-						rosc_set_div(divider);
-						rosc_set_range(ranges[range_index]);
-						rosc_write(&rosc_hw->freqa, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | codes[freqa_code_index]);
-						rosc_write(&rosc_hw->freqb, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | codes[freqb_code_index]);
-						sleep_ms(10);
-						
-						uint rosc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC);
-						#if LOW_VREG_EXPES
-						sprintf(strings_buffer[index_strings++], "rosc,%.2d,%.2d,%x,%.4x,%.4x,%d\n", vregs[vreg_index], divider, ranges[range_index], codes[freqa_code_index], codes[freqb_code_index], rosc_freq);
-						if(index_strings >= BUFF_LEN) {
-							printf_buffer();
+	printf("iteration,clock_source,vreg,divider,range,freqa,freqb,clock_freq\n");
+	for (int iteration = 0; iteration < nb_iterations; iteration++) {
+		for (int vreg_index = 0; vreg_index < sizeof(vregs)/sizeof(vregs[0]); vreg_index++) {
+			for (int divider = 1; divider < MAX_DIVIDER; divider+=5) {
+				for (int range_index = 0; range_index < sizeof(ranges)/sizeof(ranges[0]); range_index++) {
+					for (int freqa_code_index = 0; freqa_code_index < sizeof(codes)/sizeof(codes[0]); freqa_code_index++) {
+						for (int freqb_code_index = 0; freqb_code_index < sizeof(codes)/sizeof(codes[0]); freqb_code_index++) {
+							vreg_set_voltage(vregs[vreg_index]);
+							sleep_ms(10);
+							
+							rosc_set_div(divider);
+							rosc_set_range(ranges[range_index]);
+							rosc_write(&rosc_hw->freqa, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | codes[freqa_code_index]);
+							rosc_write(&rosc_hw->freqb, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | codes[freqb_code_index]);
+							sleep_ms(100);
+							
+							uint rosc_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC);
+							#if LOW_VREG_EXPES
+							sprintf(strings_buffer[index_strings++], "rosc,%.2d,%.2d,%x,%.4x,%.4x,%d\n", vregs[vreg_index], divider, ranges[range_index], codes[freqa_code_index], codes[freqb_code_index], rosc_freq);
+							if(index_strings >= BUFF_LEN) {
+								printf_buffer();
+							}
+							#else
+							printf("%d,rosc,%.2d,%.2d,%x,%.4x,%.4x,%d\n", iteration, vregs[vreg_index], divider, ranges[range_index], codes[freqa_code_index], codes[freqb_code_index], rosc_freq);
+							#endif
 						}
-						#else
-						printf("rosc,%.2d,%.2d,%x,%.4x,%.4x,%d\n", vregs[vreg_index], divider, ranges[range_index], codes[freqa_code_index], codes[freqb_code_index], rosc_freq);
-						#endif
 					}
 				}
 			}
