@@ -380,10 +380,12 @@ void leverage_clock_source_xosc() {
 }
 
 void leverage_clock_source_pll(uint vco_freq, uint div1, uint div2) {
-	xosc_init();
-	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
-	restart_all_ticks();
+	leverage_clock_source_xosc();
+	//xosc_init();
+	//clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+	//restart_all_ticks();
 	pll_init(pll_sys, PLL_SYS_REFDIV, vco_freq, div1, div2);
+	// TODO: measure frequency
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, XOSC_HZ);
 	
 	// Disable unused clock sources
