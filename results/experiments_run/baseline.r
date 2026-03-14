@@ -1,8 +1,3 @@
-pll_freq <- 150000000
-xosc_freq <- 12000000
-rosc_freq <- 10887000
-lposc_freq <- 20000
-
 name <- "baseline"
 confs <- c("PLL", "XOSC", "ROSC", "LPOSC")
 names = c(
@@ -24,3 +19,7 @@ freqs <- c(
 )
 df <- read.csv(paste(name, ".csv", sep=""))
 max_expe_num <- 23
+x_power_median <- 43
+y_power_median_offset <- 5
+x_clock_freq <- 33
+y_max <- 85

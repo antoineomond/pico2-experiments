@@ -5,7 +5,8 @@ library(patchwork)
 library(stringr)
 
 #source("baseline.r")
-source("minimums-pll.r")
+#source("minimums-pll.r")
+source("minimums-rosc.r")
 
 # power
 legend_lookup <- tibble(
@@ -23,9 +24,9 @@ df_by_legend_group <- df_by_legend_group %>%
 	
 p1 <- ggplot(df_by_legend_group, aes(x = current_timestamp, y = power_sample, color=legend_group, group=legend_group)) +
 	geom_line(na.rm = TRUE) +
-	geom_text(aes(x=43, y = power_median, label = round(power_median)), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
-	geom_text(aes(x=33, y = power_median+5, label = paste(clock_freq/1000000, "MHz")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
-	scale_y_continuous(limits=c(0, 85), n.breaks=15) +
+	geom_text(aes(x=x_power_median, y = power_median, label = round(power_median)), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
+	geom_text(aes(x=x_clock_freq, y = power_median+y_power_median_offset, label = paste(clock_freq/1000000, "MHz")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
+	scale_y_continuous(limits=c(0, y_max), n.breaks=15) +
 	geom_hline(aes(yintercept = power_median, color = legend_group, group = legend_group), linetype = "dashed") +
 	labs(title = "", x = "Timestamp in seconds", y = "Power usage in mW") + 
   scale_color_manual(name = "Processor clock", values = clock_colors)
