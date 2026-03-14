@@ -4,15 +4,12 @@ library(rlang)
 library(patchwork)
 
 #source("baseline.r")
-source("minimums.r")
+source("minimums-pll.r")
 
 # power
 legend_lookup <- tibble(
   expe_num = 0:max_expe_num,
-  legend_group = rep(
-    confs,
-    each = 6
-  )
+  legend_group = rep(confs, each = 6)
 )
 df_by_legend_group <- df %>%
 	left_join(legend_lookup, by = "expe_num") %>%
@@ -20,11 +17,13 @@ df_by_legend_group <- df %>%
 df_by_legend_group <- df_by_legend_group %>%
 	group_by(legend_group) %>%
 	mutate(power_median = median(power_sample, na.rm = TRUE)) %>%
+	mutate(clock_freq = freqs[legend_group]) %>%
 	ungroup()
 	
 p1 <- ggplot(df_by_legend_group, aes(x = current_timestamp, y = power_sample, color=legend_group, group=legend_group)) +
 	geom_line(na.rm = TRUE) +
 	geom_text(aes(x=43, y = power_median, label = round(power_median)), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
+	geom_text(aes(x=33, y = power_median+5, label = paste(clock_freq/1000000, "MHz")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
 	scale_y_continuous(limits=c(0, 85), n.breaks=15) +
 	geom_hline(aes(yintercept = power_median, color = legend_group, group = legend_group), linetype = "dashed") +
 	labs(title = "", x = "Timestamp in seconds", y = "Power usage in mW") + 
@@ -45,11 +44,8 @@ p2 <- ggplot(energy_consumption, aes(x = expe_name, y = energy_sample, fill=expe
 	  y = "Total energy consumption in mJ",
 	  title = ""
   ) +
+	scale_x_discrete(label=abbreviate) +
   scale_fill_manual(name = "Processor clock", values = clock_colors) +
-	theme(aspect.ratio = 4/1, legend.position = "none")
+	theme(aspect.ratio = 4/1, legend.position = "none", axis.text.x = element_text(size = 8))
 
-ggsave(paste(name, ".pdf", sep=""), plot=p1 + p2 + plot_layout(guides = 'collect'))
-
-#df %>%
-#	group_by(legend_group) %>%
-#	summarise(median = median(power_sample, na.rm = TRUE))
+ggsave(paste("/home/aomond/research/projet_sensor_loic_2025/pico/paper_mcu/images/", name, ".pdf", sep=""), plot=p1 + p2 + plot_layout(guides = 'collect'))

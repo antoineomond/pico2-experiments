@@ -1,4 +1,4 @@
-name <- "minimums_w_ref"
+name <- "minimums"
 confs <- c(
 	"PLL (min f)",
 	"ROSC (min f)",
@@ -29,5 +29,18 @@ clock_colors <- c(
 	"XOSC (min f v)" = "green",
 	"ROSC (min f v)" = "orange"
 )
+freqs <- c(
+	"PLL (min f)"    = 15429000, 
+	"ROSC (min f)"   = 2902000, 
+	"PLL (min v)"    = 150000000, 
+	"XOSC (min v)"   = 12000000, 
+	"ROSC (min v)"   = 10881000, 
+	"PLL (min f v)"  = 15428000, 
+	"XOSC (min f v)" = 12000000, 
+	"ROSC (min f v)" = 2902000 
+)
 df <- read.csv(paste(name, ".csv", sep=""))
 max_expe_num <- 47
+
+df <- df %>%
+	filter(expe_num %in% c(0:5, 12:17, 30:35))
