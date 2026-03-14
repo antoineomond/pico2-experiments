@@ -2,6 +2,7 @@ library("ggplot2")
 library("dplyr")
 library(rlang)
 library(patchwork)
+library(stringr)
 
 #source("baseline.r")
 source("minimums-pll.r")
@@ -44,8 +45,8 @@ p2 <- ggplot(energy_consumption, aes(x = expe_name, y = energy_sample, fill=expe
 	  y = "Total energy consumption in mJ",
 	  title = ""
   ) +
-	scale_x_discrete(label=abbreviate) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 7)) +
   scale_fill_manual(name = "Processor clock", values = clock_colors) +
-	theme(aspect.ratio = 4/1, legend.position = "none", axis.text.x = element_text(size = 8))
+	theme(aspect.ratio = 3/1, legend.position = "none", axis.text.x = element_text(size = 8))
 
 ggsave(paste("/home/aomond/research/projet_sensor_loic_2025/pico/paper_mcu/images/", name, ".pdf", sep=""), plot=p1 + p2 + plot_layout(guides = 'collect'))
