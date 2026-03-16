@@ -2,23 +2,20 @@
 #include "experiments.h"
 
 // Select experiments and phase to run
-#define EXPES_PARAMS expes_minimums
-#define NB_EXPES size_expes_minimums
+#define EXPES_PARAMS expes_minimums_rosc
+#define NB_EXPES size_expes_minimums_rosc
 #define PHASE 1
+//////////////////////////////////////
 
 #define LINE_SIZE 50
-extern const struct params expes_baseline[];
-extern const uint size_expes_baseline;
-extern const struct params expes_minimums[];
-extern const uint size_expes_minimums;
-extern const struct params expes_same_freqs[];
-extern const uint size_expes_same_freqs;
+extern const struct params EXPES_PARAMS[];
+extern const uint NB_EXPES;
 extern float TIME_RATE;
 
 int main() {
 	iteration_init(PHASE);
 	const struct params *expes = EXPES_PARAMS;
-	uint nb_expes = NB_EXPES;
+	const uint nb_expes = NB_EXPES;
 	uint expe_num = watchdog_hw->scratch[1]%nb_expes;
 	char buffer[LINE_SIZE];
 	
@@ -58,7 +55,7 @@ int main() {
 	clock_set_reported_hz(clk_sys, clk_src_freq);
 	
 	uint8_t results = execute_benchmarks(clock_source_lposc);
-	sprintf(buffer, "%d,%d,%d,%b\n",expe_num,expes[expe_num].clock_source,clock_freq,results);
+	sprintf(buffer, "%d,%d,%d,%b\n",expe_num,expes[expe_num].clock_source,clk_src_freq,results);
 	
 	iteration_end(PHASE, buffer);
 	return 0; // Should never reach here
