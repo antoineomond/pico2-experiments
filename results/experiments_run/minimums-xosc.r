@@ -1,30 +1,30 @@
 name <- "minimums-xosc"
 confs <- c(
-	"XOSC (min v)",
-	"XOSC (baseline)"
+	"XOSC (baseline)",
+	"XOSC (1.00V)",
+	"XOSC (0.90V)",
+	"XOSC (0.80V) (min v)"
 )
 names = c(
-	"5" = "XOSC (min v)",
-	"11" = "XOSC (baseline)"
+	"5" = "XOSC (baseline)",
+	"11" = "XOSC (1.00V)",
+	"17" = "XOSC (0.90V)",
+	"23" = "XOSC (0.80V) (min v)"
 )
 clock_colors <- c(
-	"XOSC (min v)" = "dark green",
-	"XOSC (baseline)" = "black"
+	"XOSC (baseline)" = "black",
+	"XOSC (1.00V)" = "dark green",
+	"XOSC (0.90V)" = "blue",
+	"XOSC (0.80V) (min v)" = "orange"
 )
 freqs <- c(
-	"XOSC (min v)"   = 12000000, 
-	"XOSC (baseline)" = 12000000
+	"XOSC (baseline)" = 12000000,
+	"XOSC (1.00V)" = 12000000,
+	"XOSC (0.90V)" = 12000000,
+	"XOSC (0.80V) (min v)" = 12000000
 )
-max_expe_num <- 5
+max_expe_num <- 23
 df <- read.csv(paste(name, ".csv", sep=""))
-df <- df %>%
-	filter(expe_num > 5) %>%
-	mutate(expe_num = expe_num - 6)
-df_baseline <- read.csv("baseline.csv")
-df_baseline <- df_baseline %>%
-	filter(expe_num %in% c(6:11))
-df <- rbind(df, df_baseline)
-max_expe_num <- max_expe_num+6
 x_power_median <- 43
 y_power_median_offset <- 5
 x_clock_freq <- 33

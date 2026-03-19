@@ -1,6 +1,6 @@
 #include "experiments.h"
 
-const struct params expes_minimums[] = {
+const struct params expes_minimums_pll[] = {
 	// Min frequency, default voltage
 	{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_DEFAULT, true},
 	
@@ -10,4 +10,4 @@ const struct params expes_minimums[] = {
 	// Min frequency, min voltage
 	{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_MIN_PLL, true},
 };
-const uint size_expes_minimums = sizeof(expes_minimums)/sizeof(expes_minimums[0]);
+const uint size_expes_minimums_pll = sizeof(expes_minimums_pll)/sizeof(expes_minimums_pll[0]);

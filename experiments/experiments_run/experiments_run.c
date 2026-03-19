@@ -2,8 +2,8 @@
 #include "experiments.h"
 
 // Select experiments and phase to run
-#define EXPES_PARAMS expes_minimums_rosc
-#define NB_EXPES size_expes_minimums_rosc
+#define EXPES_PARAMS expes_minimums_xosc
+#define NB_EXPES size_expes_minimums_xosc
 #define PHASE 1
 //////////////////////////////////////
 
@@ -55,7 +55,7 @@ int main() {
 	clock_set_reported_hz(clk_sys, clk_src_freq);
 	
 	uint8_t results = execute_benchmarks(clock_source_lposc);
-	sprintf(buffer, "%d,%d,%d,%b\n",expe_num,expes[expe_num].clock_source,clk_src_freq,results);
+	sprintf(buffer, "%d,%d,%d,%d,%b\n",expe_num,expes[expe_num].clock_source,clk_src_freq,expes[expe_num].vreg_output,results);
 	
 	iteration_end(PHASE, buffer);
 	return 0; // Should never reach here
