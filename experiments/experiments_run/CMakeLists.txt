@@ -2,6 +2,7 @@ add_executable(experiments_run
 				params_baseline.c
 				params_minimums_pll.c
 				params_minimums_rosc.c
+				params_minimums_rosc-vregs.c
 				params_minimums_xosc.c
         experiments_run.c)
 target_link_libraries(experiments_run

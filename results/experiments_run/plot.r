@@ -29,7 +29,7 @@ p1 <- ggplot(df_by_legend_group, aes(x = current_timestamp, y = power_sample, co
 	geom_text(aes(x=x_clock_freq, y = power_median+y_power_median_offset, label = paste(clock_freq/1000000, "MHz")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
 	scale_y_continuous(limits=c(0, y_max), n.breaks=15) +
 	geom_hline(aes(yintercept = power_median, color = legend_group, group = legend_group), linetype = "dashed") +
-	labs(title = "", x = "Timestamp in seconds", y = "Power usage in mW") + 
+	labs(title = "", x = "Timestamp in seconds", y = "Power usage in mW") +
   scale_color_manual(name = "Processor clock", values = clock_colors)
 
 # energy
