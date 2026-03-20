@@ -2,8 +2,8 @@
 #include "experiments.h"
 
 // Select experiments and phase to run
-#define EXPES_PARAMS expes_minimums_rosc_vregs
-#define NB_EXPES size_expes_minimums_rosc_vregs
+#define EXPES_PARAMS expes_minimums_rosc
+#define NB_EXPES size_expes_minimums_rosc
 #define PHASE 1
 //////////////////////////////////////
 
@@ -18,6 +18,12 @@ int main() {
 	const uint nb_expes = NB_EXPES;
 	uint expe_num = watchdog_hw->scratch[1]%nb_expes;
 	char buffer[LINE_SIZE];
+	
+	// pll must be deactivated to reach vreg outputs below 0.9V
+	leverage_clock_source_xosc();
+	sleep_ms(100);
+	vreg_set_voltage(expes[expe_num].vreg_output);
+	sleep_ms(100);
 	
 	// Set clock source with default frequencies
 	if(expes[expe_num].clock_source == PLL_SYS) {
@@ -34,8 +40,6 @@ int main() {
 	}
 	
 	// Voltage much be set after clock sources and frequency to reach values below 0.9V
-	vreg_set_voltage(expes[expe_num].vreg_output);
-	
 	uint clk_src_freq;
 	if(expes[expe_num].clock_source == PLL_SYS) clk_src_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY) * KHZ;
 	if(expes[expe_num].clock_source == XOSC) clk_src_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_XOSC_CLKSRC) * KHZ;
@@ -45,7 +49,11 @@ int main() {
 	if(expes[expe_num].set_as_ref && expes[expe_num].clock_source == ROSC) {
 		clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, clk_src_freq);
 		restart_all_ticks();
-		TIME_RATE = ((float)((float)clk_src_freq/(float)MHZ))/((float)(clk_src_freq/MHZ)); // clk_ref takes clock_freq/MHz as reference to compute time, trimming all remaining KHz. This leads to incorrect time tracking  
+		uint divider = ((float)(clk_src_freq/MHZ));
+		if(divider == 0) {
+			divider = 1;
+		}
+		TIME_RATE = ((float)((float)clk_src_freq/(float)MHZ))/divider; // clk_ref takes clock_freq/MHz as reference to compute time, trimming all remaining KHz. This leads to incorrect time tracking  
 		xosc_disable();
 	}
 	if(expes[expe_num].set_as_ref && expes[expe_num].clock_source == LPOSC) {

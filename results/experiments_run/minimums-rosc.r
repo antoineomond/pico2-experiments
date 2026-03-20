@@ -18,10 +18,10 @@ clock_colors <- c(
 	"ROSC (min f v)" = "orange"
 )
 freqs <- c(
-	"ROSC (baseline)" = 10881000, 
-	"ROSC (min f)"   =   2905000, 
-	"ROSC (min v)"   =  10897000, 
-	"ROSC (min f v)" =   2905000
+	"ROSC (baseline)" = 11006000, 
+	"ROSC (min f)"   =   2937000, 
+	"ROSC (min v)"   =   3927000, 
+	"ROSC (min f v)" =   1051000
 )
 max_expe_num <- 23
 df <- read.csv(paste(name, ".csv", sep=""))

@@ -63,14 +63,14 @@ void iteration_init(uint phase) {
 }
 
 void iteration_end(uint phase, char* buffer) {
-	sleep_us((int)(10*US*TIME_RATE));
-	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 	
 	if(phase==0) {
 		// Reinit the PLLs to print results
 		xosc_init();
 		clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
 		clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_XOSC_CLKSRC, XOSC_HZ);
+		sleep_us((int)(10*US*TIME_RATE));
+		vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 		pll_deinit(pll_sys);
 		pll_deinit(pll_usb);
 		restart_all_ticks();
@@ -364,11 +364,7 @@ void leverage_clock_source_xosc() {
 
 void leverage_clock_source_pll(uint vco_freq, uint div1, uint div2) {
 	leverage_clock_source_xosc();
-	//xosc_init();
-	//clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
-	//restart_all_ticks();
 	pll_init(pll_sys, PLL_SYS_REFDIV, vco_freq, div1, div2);
-	// TODO: measure frequency
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, XOSC_HZ);
 	
 	// Disable unused clock sources

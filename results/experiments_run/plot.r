@@ -6,8 +6,8 @@ library(stringr)
 
 #source("baseline.r")
 #source("minimums-pll.r")
-#source("minimums-rosc.r")
-source("minimums-rosc-vregs.r")
+source("minimums-rosc.r")
+#source("minimums-rosc-vregs.r")
 #source("minimums-xosc.r")
 
 # power
