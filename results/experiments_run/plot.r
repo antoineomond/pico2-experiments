@@ -6,7 +6,8 @@ library(stringr)
 
 #source("baseline.r")
 #source("minimums-pll.r")
-source("minimums-rosc.r")
+#source("minimums-rosc.r")
+source("minimums-rosc-vregs.r")
 #source("minimums-xosc.r")
 
 # power
@@ -22,7 +23,9 @@ df_by_legend_group <- df_by_legend_group %>%
 	mutate(power_median = median(power_sample, na.rm = TRUE)) %>%
 	mutate(clock_freq = freqs[legend_group]) %>%
 	ungroup()
-	
+
+#df_by_legend_group <- df_by_legend_group %>% filter(expe_num >= 6 & expe_num < 12)
+#p1 <- ggplot(df_by_legend_group, aes(x = current_timestamp, y = power_sample, color=factor(expe_num), group=factor(expe_num))) +
 p1 <- ggplot(df_by_legend_group, aes(x = current_timestamp, y = power_sample, color=legend_group, group=legend_group)) +
 	geom_line(na.rm = TRUE) +
 	geom_text(aes(x=x_power_median, y = power_median, label = round(power_median)), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +

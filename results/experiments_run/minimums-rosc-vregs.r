@@ -27,13 +27,13 @@ clock_colors <- c(
 	"ROSC (0.80V) (min)" = "brown"
 )
 freqs <- c(
-	"ROSC (baseline)"    = 10889000,
-	"ROSC (1.05V)"       = 10873000,
-	"ROSC (1.00V)"       = 10886000,
-	"ROSC (0.95V)"       = 10890000,
-	"ROSC (0.90V)"       = 10886000,
-	"ROSC (0.85V)"       = 10894000,
-	"ROSC (0.80V) (min)" = 10892000
+	"ROSC (baseline)"    = 11020000,
+	"ROSC (1.05V)"       = 9745000,
+	"ROSC (1.00V)"       = 8577000,
+	"ROSC (0.95V)"       = 7399000,
+	"ROSC (0.90V)"       = 6196000,
+	"ROSC (0.85V)"       = 5182000,
+	"ROSC (0.80V) (min)" = 4298000
 )
 max_expe_num <- 41
 df <- read.csv(paste(name, ".csv", sep=""))

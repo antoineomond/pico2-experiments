@@ -20,24 +20,19 @@ int main() {
 	char buffer[LINE_SIZE];
 	
 	// Set clock source with default frequencies
-	uint clock_freq;
 	if(expes[expe_num].clock_source == PLL_SYS) {
 		leverage_clock_source_pll(expes[expe_num].pll_vco_freq, expes[expe_num].pll_div1, expes[expe_num].pll_div2);
-		clock_freq = expes[expe_num].pll_vco_freq / (expes[expe_num].pll_div1*expes[expe_num].pll_div2);
 	}
 	if(expes[expe_num].clock_source == XOSC) {
 		leverage_clock_source_xosc();
-		clock_freq = 12*MHZ;
 	}
 	if(expes[expe_num].clock_source == ROSC) {
-		leverage_clock_source_rosc(expes[expe_num].rosc_div, expes[expe_num].rosc_range, expes[expe_num].rosc_drive_freqa, expes[expe_num].rosc_drive_freqb, &clock_freq, expes[expe_num].set_as_ref);
+		leverage_clock_source_rosc(expes[expe_num].rosc_div, expes[expe_num].rosc_range, expes[expe_num].rosc_drive_freqa, expes[expe_num].rosc_drive_freqb);
 	}
 	if(expes[expe_num].clock_source == LPOSC) {
-		leverage_clock_source_lposc(expes[expe_num].lposc_trim, &clock_freq, expes[expe_num].set_as_ref);
+		leverage_clock_source_lposc(expes[expe_num].lposc_trim);
 	}
-	bool clock_source_lposc = expes[expe_num].clock_source == LPOSC ? true : false;
 	
-	// Set default voltage
 	// Voltage much be set after clock sources and frequency to reach values below 0.9V
 	vreg_set_voltage(expes[expe_num].vreg_output);
 	
@@ -47,13 +42,21 @@ int main() {
 	if(expes[expe_num].clock_source == ROSC) clk_src_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC_PH) * KHZ;
 	if(expes[expe_num].clock_source == LPOSC) clk_src_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_LPOSC_CLKSRC) * KHZ;
 	
-	if(expes[expe_num].set_as_ref && (expes[expe_num].clock_source == ROSC || expes[expe_num].clock_source == LPOSC)) {
-		clock_set_reported_hz(clk_ref, clk_src_freq);
+	if(expes[expe_num].set_as_ref && expes[expe_num].clock_source == ROSC) {
+		clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_ROSC_CLKSRC_PH, 0, clk_src_freq);
 		restart_all_ticks();
 		TIME_RATE = ((float)((float)clk_src_freq/(float)MHZ))/((float)(clk_src_freq/MHZ)); // clk_ref takes clock_freq/MHz as reference to compute time, trimming all remaining KHz. This leads to incorrect time tracking  
+		xosc_disable();
+	}
+	if(expes[expe_num].set_as_ref && expes[expe_num].clock_source == LPOSC) {
+		clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_LPOSC_CLKSRC, 0, clk_src_freq);
+		restart_all_ticks();
+		TIME_RATE = ((float)clk_src_freq)/((float)1*MHZ); // LPOSC isn't fast enough to generate the 1us tick (hardwired value). The TIME_RATE divides any active wait to account for this slowness
+		xosc_disable();
 	}
 	clock_set_reported_hz(clk_sys, clk_src_freq);
 	
+	bool clock_source_lposc = expes[expe_num].clock_source == LPOSC ? true : false;
 	uint8_t results = execute_benchmarks(clock_source_lposc);
 	sprintf(buffer, "%d,%d,%d,%d,%b\n",expe_num,expes[expe_num].clock_source,clk_src_freq,expes[expe_num].vreg_output,results);
 	
