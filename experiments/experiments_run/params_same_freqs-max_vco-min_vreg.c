@@ -3,10 +3,10 @@
 const struct params expes_same_freqs_max_vco_min_vreg[] = {
 	// 30 MHz, min VREG
 	{PLL_SYS, 1540*MHZ, 7, 7, 0, 0, 0, 0, 0, VREG_MIN_PLL, true},
-	{ROSC, 0, 0, 0, 1, 0xfa4, 0x0177, 0x0003, 0, VREG_VOLTAGE_0_75, true},
+	{ROSC, 0, 0, 0, 2, 0xfa7, 0x0005, 0x0007, 0, VREG_VOLTAGE_0_80, true},
 	// 50MHz
 	{PLL_SYS, 1520*MHZ, 5, 6, 0, 0, 0, 0, 0, VREG_MIN_PLL, true},
-	{ROSC, 0, 0, 0, 1, 0xfa7, 0x0017, 0x0037, 0, VREG_VOLTAGE_0_75, true},
+	{ROSC, 0, 0, 0, 1, 0xfa5, 0x0017, 0x0005, 0, VREG_VOLTAGE_0_80, true},
 	// 70MHz
 	//{PLL_SYS, 1480*MHZ, 3, 7, 0, 0, 0, 0, 0, VREG_MIN_PLL, true},
 	// TODO: find rosc value with default vreg output

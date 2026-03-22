@@ -18,7 +18,7 @@
 #define BENCH_PRIME_SIZE 5000
 #define BENCH_PRIME_SIZE_LPOSC 200
 #define BENCH_MAT_SIZE 43000
-#define NB_ITERATIONS_MAT_MUL 1
+#define NB_ITERATIONS_MAT_MUL 100
 #define NB_ITERATIONS_MAT_MUL_LPOSC 1
 
 // Benchmark correct results
@@ -318,10 +318,7 @@ void leverage_clock_source_lposc(uint trim) {
 	
 	// Specify lposc frequency
 	powman_clear_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS);
-	powman_set_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS & trim);
-	
-	// Count lposc frequency then put it as clk_ref and clk_sys
-	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, 0); // clk_freq to be set later in the code
+	powman_set_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS & (trim << POWMAN_LPOSC_TRIM_LSB));
 	
 	// Disable unused clock sources
 	pll_deinit(pll_sys);
@@ -354,7 +351,7 @@ void leverage_clock_source_xosc() {
 	xosc_init();
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
 	restart_all_ticks();
-	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_XOSC_CLKSRC, XOSC_HZ);
+	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, XOSC_HZ);
 	
 	// Disable unused clock sources
 	pll_deinit(pll_sys);

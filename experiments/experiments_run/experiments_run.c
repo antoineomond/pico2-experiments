@@ -2,8 +2,8 @@
 #include "experiments.h"
 
 // Select experiments and phase to run
-#define EXPES_PARAMS expes_minimums_rosc
-#define NB_EXPES size_expes_minimums_rosc
+#define EXPES_PARAMS expes_same_freqs_max_vco_min_vreg
+#define NB_EXPES size_expes_same_freqs_max_vco_min_vreg
 #define PHASE 1
 //////////////////////////////////////
 

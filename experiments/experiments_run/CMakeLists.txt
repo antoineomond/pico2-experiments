@@ -4,6 +4,13 @@ add_executable(experiments_run
 				params_minimums_rosc.c
 				params_minimums_rosc-vregs.c
 				params_minimums_xosc.c
+				params_same_freqs-max_vco-def_vreg.c
+				params_same_freqs-max_vco-min_vreg.c
+				params_same_freqs-min_vco-def_vreg.c
+				params_same_freqs-min_vco-min_vreg.c
+				params_minimums_lposc_default_freq.c
+				params_minimums_lposc_max_freq.c
+				params_minimums_lposc_min_freq.c
         experiments_run.c)
 target_link_libraries(experiments_run
 				pico_stdlib
