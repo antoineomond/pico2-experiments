@@ -25,7 +25,7 @@ freqs <- c(
 )
 max_expe_num <- 23
 df <- read.csv(paste(name, ".csv", sep=""))
-x_power_median <- 400
-y_power_median_offset <- 2
-x_clock_freq <- 300 
+x_power_median <- 600
+y_power_median_offset <- 0.5
+x_clock_freq <- 350 
 y_max <- 25

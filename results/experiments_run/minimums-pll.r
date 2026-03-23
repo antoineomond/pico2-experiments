@@ -55,7 +55,8 @@ df <- rbind(df, df_baseline)
 df <- df %>% filter(expe_num < max_expe_num+6)
 max_expe_num <- max_expe_num+6
 df$expe_num[df$expe_num == 52] <- 53 # slight hack due to pll expes doing mat mut too fast yielding no record in the csv (to fix)
-x_power_median <- 43
+x_power_median <- 60
 y_power_median_offset <- 5
+y_energy_offset <- 20
 x_clock_freq <- 33
 y_max <- 85

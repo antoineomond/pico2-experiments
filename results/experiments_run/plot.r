@@ -6,7 +6,7 @@ library(patchwork)
 library(stringr)
 
 #source("baseline.r")
-#source("minimums-pll.r")
+source("minimums-pll.r")
 #source("minimums-rosc.r")
 #source("minimums-rosc-vregs.r")
 #source("minimums-xosc.r")
@@ -14,7 +14,7 @@ library(stringr)
 #source("same_freqs-min_vco-min_vreg.r")
 #source("minimums_lposc_default_freq.r")
 #source("minimums_lposc_min_freq.r")
-source("minimums_lposc_max_freq.r")
+#source("minimums_lposc_max_freq.r")
 
 # power
 legend_lookup <- tibble(
@@ -34,8 +34,8 @@ df_by_legend_group <- df_by_legend_group %>%
 #p1 <- ggplot(df_by_legend_group, aes(x = current_timestamp, y = power_sample, color=factor(expe_num), group=factor(expe_num))) +
 p1 <- ggplot(df_by_legend_group, aes(x = current_timestamp, y = power_sample, color=legend_group, group=legend_group)) +
 	geom_line(na.rm = TRUE) +
-	geom_text(aes(x=x_power_median, y = power_median, label = round(power_median)), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
-	#geom_text(aes(x=x_clock_freq, y = power_median+y_power_median_offset, label = paste(clock_freq/1000000, "MHz")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
+	geom_text(aes(x=x_power_median, y = power_median+y_power_median_offset, label = paste(round(power_median,2), "mW")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
+	geom_text(aes(x=x_clock_freq, y = power_median+y_power_median_offset, label = paste(round(clock_freq/1000000, 2), "MHz")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
 	scale_y_continuous(limits=c(0, y_max), n.breaks=15) +
 	geom_hline(aes(yintercept = power_median, color = legend_group, group = legend_group), linetype = "dashed") +
 	labs(title = "", x = "Timestamp in seconds", y = "Power usage in mW") +
@@ -51,7 +51,7 @@ energy_consumption <- df %>%
   ungroup()
 p2 <- ggplot(energy_consumption, aes(x = expe_name, y = energy_sample, fill=expe_name)) +
   geom_bar(stat = "identity", width = 0.2) +
-	geom_text(aes(label = round(energy_sample), y = energy_sample + 200)) +
+	geom_text(aes(label = round(energy_sample), y = energy_sample + y_energy_offset)) +
   labs(x = "Processor clock",
 	  y = "Total energy consumption in mJ",
 	  title = ""
