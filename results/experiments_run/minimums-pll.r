@@ -1,4 +1,4 @@
-name <- "minimums"
+name <- "minimums-pll"
 confs <- c(
 	"PLL (min f)",
 	"ROSC (min f)",

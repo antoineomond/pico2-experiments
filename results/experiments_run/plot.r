@@ -5,8 +5,8 @@ library(rlang)
 library(patchwork)
 library(stringr)
 
-#source("baseline.r")
-source("minimums-pll.r")
+source("baseline.r")
+#source("minimums-pll.r")
 #source("minimums-rosc.r")
 #source("minimums-rosc-vregs.r")
 #source("minimums-xosc.r")
@@ -24,20 +24,21 @@ legend_lookup <- tibble(
 df_by_legend_group <- df %>%
 	left_join(legend_lookup, by = "expe_num") %>%
 	mutate(legend_group = factor(legend_group, levels = confs))
-df_by_legend_group <- df_by_legend_group %>%
-	group_by(legend_group) %>%
-	mutate(power_median = median(power_sample, na.rm = TRUE)) %>%
-	mutate(clock_freq = freqs[legend_group]) %>%
-	ungroup()
+power_summary <- df_by_legend_group %>%
+  group_by(legend_group) %>%
+  summarise(
+		power_median = median(power_sample, na.rm = TRUE),
+		clock_freq = freqs[unique(legend_group)]
+	)
 
 #df_by_legend_group <- df_by_legend_group %>% filter(expe_num >= 6 & expe_num < 12)
 #p1 <- ggplot(df_by_legend_group, aes(x = current_timestamp, y = power_sample, color=factor(expe_num), group=factor(expe_num))) +
 p1 <- ggplot(df_by_legend_group, aes(x = current_timestamp, y = power_sample, color=legend_group, group=legend_group)) +
 	geom_line(na.rm = TRUE) +
-	geom_text(aes(x=x_power_median, y = power_median+y_power_median_offset, label = paste(round(power_median,2), "mW")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
-	geom_text(aes(x=x_clock_freq, y = power_median+y_power_median_offset, label = paste(round(clock_freq/1000000, 2), "MHz")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
+	geom_text(data = power_summary, aes(x=x_power_median, y = power_median+y_power_median_offset, label = paste(round(power_median,2), "mW")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
+	geom_text(data = power_summary, aes(x=x_clock_freq, y = power_median+y_power_median_offset, label = paste(round(clock_freq/1000000, 2), "MHz")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
 	scale_y_continuous(limits=c(0, y_max), n.breaks=15) +
-	geom_hline(aes(yintercept = power_median, color = legend_group, group = legend_group), linetype = "dashed") +
+	geom_hline(data = power_summary, aes(yintercept = power_median, color = legend_group), linetype = "dashed") +
 	labs(title = "", x = "Timestamp in seconds", y = "Power usage in mW") +
   scale_color_manual(name = "Processor clock", values = clock_colors)
 
