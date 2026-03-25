@@ -4,15 +4,16 @@ library("dplyr")
 library(rlang)
 library(patchwork)
 library(stringr)
+options(dplyr.print_max = 1e9, pillar.width = Inf)
 
-source("baseline.r")
+#source("baseline.r")
 #source("minimums-pll.r")
 #source("minimums-rosc.r")
 #source("minimums-rosc-vregs.r")
 #source("minimums-xosc.r")
 #source("same_freqs-max_vco-def_vreg.r")
 #source("same_freqs-min_vco-min_vreg.r")
-#source("minimums_lposc_default_freq.r")
+source("minimums_lposc_default_freq.r")
 #source("minimums_lposc_min_freq.r")
 #source("minimums_lposc_max_freq.r")
 
@@ -44,15 +45,28 @@ p1 <- ggplot(df_by_legend_group, aes(x = current_timestamp, y = power_sample, co
 
 # energy
 energy_consumption <- df %>%
-  filter(expe_num %in% seq(5, max_expe_num, by=6), !is.na(energy_sample)) %>%
+	filter(expe_num %in% seq(5, max_expe_num, by=6), !is.na(energy_sample)) %>%
+	# Associate expe name to expe_num
   group_by(expe_num) %>%
-  slice_tail(n = 1) %>%
   mutate(expe_name = recode(expe_num, !!!names)) %>%
 	mutate(expe_name = factor(expe_name, levels = confs)) %>%
-  ungroup()
-p2 <- ggplot(energy_consumption, aes(x = expe_name, y = energy_sample, fill=expe_name)) +
+  ungroup() %>%
+	# Get accumulated energy for each expe
+  group_by(iteration_num, expe_num) %>%
+	filter(!is.na(energy_sample)) %>%
+  slice_tail(n = 1) %>%   # last value per iteration/expe_num
+  ungroup() %>%
+	# compute avg_energy and energy_sample
+  group_by(expe_num) %>%
+  summarise(expe_name = expe_name, avg_energy = mean(energy_sample), std_energy = sd(energy_sample), .groups = "drop") %>%
+	distinct()
+
+energy_consumption
+
+p2 <- ggplot(energy_consumption, aes(x = expe_name, y = avg_energy, fill=expe_name)) +
   geom_bar(stat = "identity", width = 0.2) +
-	geom_text(aes(label = round(energy_sample), y = energy_sample + y_energy_offset)) +
+	geom_errorbar(aes(ymin = avg_energy - std_energy, ymax = avg_energy + std_energy), width = 0.2) +
+	geom_text(aes(label = round(avg_energy), y = avg_energy + y_energy_offset)) +
   labs(x = "Processor clock",
 	  y = "Total energy consumption in mJ",
 	  title = ""
