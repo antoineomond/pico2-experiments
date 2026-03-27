@@ -18,7 +18,7 @@
 #define BENCH_PRIME_SIZE 5000
 #define BENCH_PRIME_SIZE_LPOSC 200
 #define BENCH_MAT_SIZE 43000
-#define NB_ITERATIONS_MAT_MUL 100
+#define NB_ITERATIONS_MAT_MUL 10
 #define NB_ITERATIONS_MAT_MUL_LPOSC 1
 
 // Benchmark correct results
@@ -36,7 +36,7 @@ const uint32_t RESET_VAL = 0xDEADBEEF;
 const int expe_pin = 11;
 float TIME_RATE = 1;
 
-void iteration_init(uint phase) {
+void iteration_init(uint phase, uint vreg_expe) {
 	sleep_ms(100); // For unknown reason, not sleeping here sometimes makes firmware upload using SWD to fail
 	
 	// Set GPIO pin to advertise experiments start and end, and puts it to low
@@ -54,12 +54,14 @@ void iteration_init(uint phase) {
 			watchdog_hw->scratch[0] = RESET_VAL;
 			watchdog_reboot(0, 0, 0);
 		}
-		pull_down_gpios();
-		turn_off_clocks();
-		disable_usb();
+		//pull_down_gpios();
+		//turn_off_clocks();
+		//disable_usb();
 	}
-	vreg_disable_voltage_limit();
-	powman_clear_bits(&powman_hw->bod, 0x000001f1);
+	if(vreg_expe < VREG_VOLTAGE_DEFAULT) {
+		vreg_disable_voltage_limit();
+		powman_clear_bits(&powman_hw->bod, 0x000001f1);
+	}
 }
 
 void iteration_end(uint phase, char* buffer) {

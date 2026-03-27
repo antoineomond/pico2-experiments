@@ -1,4 +1,4 @@
-name <- "minimums-rosc"
+name <- paste(folder, "/minimums-rosc", sep="")
 confs <- c(
 	"ROSC (baseline)",
 	"ROSC (min f)",

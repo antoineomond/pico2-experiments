@@ -1,4 +1,4 @@
-name <- "minimums-xosc"
+name <- paste(folder, "/minimums-xosc", sep="")
 confs <- c(
 	"XOSC (baseline)",
 	"XOSC (1.00V)",

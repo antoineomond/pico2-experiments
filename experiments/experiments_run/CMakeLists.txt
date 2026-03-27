@@ -1,4 +1,5 @@
 add_executable(experiments_run
+				params_all.c
 				params_baseline.c
 				params_minimums_pll.c
 				params_minimums_rosc.c

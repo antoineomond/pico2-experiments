@@ -2,8 +2,8 @@
 #include "experiments.h"
 
 // Select experiments and phase to run
-#define EXPES_PARAMS expes_same_freqs_max_vco_min_vreg
-#define NB_EXPES size_expes_same_freqs_max_vco_min_vreg
+#define EXPES_PARAMS expes_all
+#define NB_EXPES size_expes_all
 #define PHASE 1
 //////////////////////////////////////
 
@@ -13,11 +13,11 @@ extern const uint NB_EXPES;
 extern float TIME_RATE;
 
 int main() {
-	iteration_init(PHASE);
 	const struct params *expes = EXPES_PARAMS;
 	const uint nb_expes = NB_EXPES;
 	uint expe_num = watchdog_hw->scratch[1]%nb_expes;
 	char buffer[LINE_SIZE];
+	iteration_init(PHASE, expes[expe_num].vreg_output);
 	
 	// pll must be deactivated to reach vreg outputs below 0.9V
 	leverage_clock_source_xosc();

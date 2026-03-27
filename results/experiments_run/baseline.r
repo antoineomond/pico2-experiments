@@ -1,4 +1,4 @@
-name <- "baseline"
+name <- paste(folder, "/baseline", sep="")
 confs <- c("PLL", "XOSC", "ROSC", "LPOSC")
 names = c(
 	"5"  = "PLL",

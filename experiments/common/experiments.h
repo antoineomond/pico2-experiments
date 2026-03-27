@@ -60,7 +60,7 @@ struct params {
 	bool set_as_ref;
 };
 
-void iteration_init(uint phase);
+void iteration_init(uint phase, uint vreg_expe);
 void iteration_end(uint phase, char* buffer);
 
 uint8_t benchmark_noop(uint benchmark_size);
