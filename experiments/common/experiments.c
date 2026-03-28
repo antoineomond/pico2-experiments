@@ -39,9 +39,6 @@ float TIME_RATE = 1;
 void iteration_init(uint phase, uint vreg_expe) {
 	sleep_ms(100); // For unknown reason, not sleeping here sometimes makes firmware upload using SWD to fail
 	
-	// Set GPIO pin to advertise experiments start and end, and puts it to low
-	gpio_init(expe_pin);
-	gpio_set_dir(expe_pin, GPIO_OUT);
 	if(watchdog_hw->scratch[0] != RESET_VAL) {
 		watchdog_hw->scratch[1] = 0; // Iteration num
 	}
@@ -62,6 +59,9 @@ void iteration_init(uint phase, uint vreg_expe) {
 		vreg_disable_voltage_limit();
 		powman_clear_bits(&powman_hw->bod, 0x000001f1);
 	}
+	// Set GPIO pin to advertise experiments start and end, and puts it to low
+	gpio_init(expe_pin);
+	gpio_set_dir(expe_pin, GPIO_OUT);
 }
 
 void iteration_end(uint phase, char* buffer) {
@@ -238,137 +238,6 @@ uint8_t benchmark_mat_mul_double(uint benchmark_size, uint nb_iteration_mat_mul)
 		free(C);
 	}
 	return correct;
-}
-
-void pull_down_gpios() {
-	for (int gpio = 0; gpio < NUM_BANK0_GPIOS; gpio++) {
-		if(!expe_pin) {
-			gpio_set_dir(gpio, 0);
-			gpio_set_function(gpio, GPIO_FUNC_SIO);
-			if(gpio > NUM_BANK0_GPIOS - NUM_ADC_CHANNELS) {
-				gpio_disable_pulls(gpio);
-				gpio_set_input_enabled(gpio, false);
-			}
-		}
-	}
-}
-
-void turn_off_clocks() {
-	clock_hw_t *clock_hw = &clocks_hw->clk[clk_usb];
-	hw_clear_bits(&clock_hw->ctrl, CLOCKS_CLK_USB_CTRL_ENABLE_BITS);
-	clock_hw = &clocks_hw->clk[clk_adc];
-	hw_clear_bits(&clock_hw->ctrl, CLOCKS_CLK_ADC_CTRL_ENABLE_BITS);
-	clock_hw = &clocks_hw->clk[clk_hstx];
-	hw_clear_bits(&clock_hw->ctrl, CLOCKS_CLK_HSTX_CTRL_ENABLE_BITS);
-}
-
-static void disable_usb() {
-    usb_hw->phy_direct = USB_USBPHY_DIRECT_TX_PD_BITS | USB_USBPHY_DIRECT_RX_PD_BITS | USB_USBPHY_DIRECT_DM_PULLDN_EN_BITS | USB_USBPHY_DIRECT_DP_PULLDN_EN_BITS;
-    
-    usb_hw->phy_direct_override = USB_USBPHY_DIRECT_RX_DM_BITS | USB_USBPHY_DIRECT_RX_DP_BITS |          USB_USBPHY_DIRECT_RX_DD_BITS |
-        USB_USBPHY_DIRECT_OVERRIDE_TX_DIFFMODE_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_DM_PULLUP_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_TX_FSSLEW_OVERRIDE_EN_BITS |
-        USB_USBPHY_DIRECT_OVERRIDE_TX_PD_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_RX_PD_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_TX_DM_OVERRIDE_EN_BITS |
-        USB_USBPHY_DIRECT_OVERRIDE_TX_DP_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_TX_DM_OE_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_TX_DP_OE_OVERRIDE_EN_BITS |
-        USB_USBPHY_DIRECT_OVERRIDE_DM_PULLDN_EN_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_DP_PULLDN_EN_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_DP_PULLUP_EN_OVERRIDE_EN_BITS |
-        USB_USBPHY_DIRECT_OVERRIDE_DM_PULLUP_HISEL_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_DP_PULLUP_HISEL_OVERRIDE_EN_BITS;
-}
-
-static void sleep_callback(void) {}
-
-void processor_deep_sleep(void) {
-		// From pico-extras
-    // Enable deep sleep at the proc
-#ifdef __riscv
-    uint32_t bits = RVCSR_MSLEEP_POWERDOWN_BITS;
-    if (!get_core_num()) {
-        bits |= RVCSR_MSLEEP_DEEPSLEEP_BITS;
-    }
-    riscv_set_csr(RVCSR_MSLEEP_OFFSET, bits);
-#else
-    scb_hw->scr |= ARM_CPU_PREFIXED(SCR_SLEEPDEEP_BITS);
-#endif
-}
-
-static void start_all_ticks(void) {
-    uint32_t cycles = clock_get_hz(clk_ref) / MHZ;
-		if(cycles <= 0) {
-			cycles = 1;
-		}
-    // Note RP2040 has a single tick generator in the watchdog which serves
-    // watchdog, system timer and M0+ SysTick; The tick generator is clocked from clk_ref
-    // but is now adapted by the hardware_ticks library for compatibility with RP2350
-    // npte: hardware_ticks library now provides an adapter for RP2040
-
-    for (int i = 0; i < (int)TICK_COUNT; ++i) {
-        tick_start((tick_gen_num_t)i, cycles);
-    }
-}
-
-void restart_all_ticks(void) {
-	for (int i = 0; i < (int)TICK_COUNT; ++i) {
-			tick_stop((tick_gen_num_t)i);
-			while(tick_is_running((tick_gen_num_t)i)) tight_loop_contents();
-	}
-	start_all_ticks();
-}
-
-void leverage_clock_source_lposc(uint trim) {
-	// Put xosc as clk_ref to count rosc frequency
-	xosc_init();
-	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
-	restart_all_ticks();
-	
-	// Specify lposc frequency
-	powman_clear_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS);
-	powman_set_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS & (trim << POWMAN_LPOSC_TRIM_LSB));
-	
-	// Disable unused clock sources
-	pll_deinit(pll_sys);
-	pll_deinit(pll_usb);
-	rosc_disable();
-}
-
-void leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb) {
-	rosc_enable();
-	
-	// Put xosc as clk_ref to count rosc frequency
-	xosc_init();
-	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
-	restart_all_ticks();
-	
-	// Specify rosc frequency
-	rosc_set_div(div);
-	rosc_set_range(range);
-	rosc_write(&rosc_hw->freqa, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | freqa);
-	rosc_write(&rosc_hw->freqb, (ROSC_FREQA_PASSWD_VALUE_PASS << ROSC_FREQA_PASSWD_LSB) | freqb);
-	
-	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_ROSC_CLKSRC, 0); // clk_freq to set later in the code
-	
-	// Disable unused clock sources
-	pll_deinit(pll_sys);
-	pll_deinit(pll_usb);
-}
-
-void leverage_clock_source_xosc() {
-	xosc_init();
-	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
-	restart_all_ticks();
-	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, XOSC_HZ);
-	
-	// Disable unused clock sources
-	pll_deinit(pll_sys);
-	pll_deinit(pll_usb);
-	rosc_disable();
-}
-
-void leverage_clock_source_pll(uint vco_freq, uint div1, uint div2) {
-	leverage_clock_source_xosc();
-	pll_init(pll_sys, PLL_SYS_REFDIV, vco_freq, div1, div2);
-	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, XOSC_HZ);
-	
-	// Disable unused clock sources
-	pll_deinit(pll_usb);
-	rosc_disable();
 }
 
 uint8_t execute_benchmarks(bool clock_source_lposc) {
