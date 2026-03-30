@@ -1,4 +1,4 @@
-#include "experiments.h"
+#include "target_configuration.h"
 
 const struct params expes_same_freqs_max_vco_def_vreg[] = {
 	// 30 MHz, default VREG

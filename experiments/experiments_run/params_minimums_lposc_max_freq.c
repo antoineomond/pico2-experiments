@@ -1,4 +1,4 @@
-#include "experiments.h"
+#include "target_configuration.h"
 
 const struct params expes_minimums_lposc_max_freq[] = {
 	// Max frequency (trim)

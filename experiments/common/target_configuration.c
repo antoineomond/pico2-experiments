@@ -1,4 +1,4 @@
-#include "experiments.h"
+#include "target_configuration.h"
 #include "pico/stdlib.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,10 +13,9 @@
 #include "hardware/vreg.h"
 #include "hardware/powman.h"
 
-struct result {
-	params p;
-	float power_median_mw;
-};
+extern float TIME_RATE;
+extern const struct result parameters[];
+extern const uint size_parameters;
 
 void pull_down_gpios() {
 	for (int gpio = 0; gpio < NUM_BANK0_GPIOS; gpio++) {
@@ -182,7 +181,7 @@ uint leverage_clock_source_pll(uint vco_freq, uint div1, uint div2) {
 }
 
 
-uint switch_configuration_from_parameter(params p) {
+uint switch_configuration_from_parameter(struct params p) {
 	// Set the voltage, clock source and frequency (measure the frequency for rosc and lposc)
 	// pll must be deactivated to reach vreg outputs below 0.9V
 	leverage_clock_source_xosc();
@@ -207,18 +206,55 @@ uint switch_configuration_from_parameter(params p) {
 	return clk_src_freq;
 }
 
-void switch_configuration(uint target_power_median_mw) {
-	// Search closest configuration that makes the rpi use a power median lower than target_power_median_mw 
-	result param = NULL;
+struct result* switch_configuration(float target_power_median_mw) {
+	// Search closest configuration that makes the rpi use a power median lower than target_power_median_mw
+	struct result *param = malloc(sizeof(struct result));
+	bool init = false;
 	for (uint i = 0; i < size_parameters; i++) {
 		if(parameters[i].power_median_mw <= target_power_median_mw) {
-			if(param == NULL) {
-				param = parameters[i];
+			if(!init) {
+				*param = parameters[i];
+				init = true;
 			}
-			else if (param.power_median_mw <= parameters[i].power_median_mw) {
-				param = parameters[i];
+			else if (init && param->power_median_mw <= parameters[i].power_median_mw) {
+				*param = parameters[i];
 			}
 		}
 	}
-	switch_configuration_from_parameter(param.p);
+	switch_configuration_from_parameter(param->p);
+	return param;
 }
+
+void switch_to_default_configuration() {
+	xosc_init();
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_XOSC_CLKSRC, XOSC_HZ);
+	restart_all_ticks();
+	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
+	sleep_us((int)(10*1000000*TIME_RATE));
+	pll_deinit(pll_sys);
+	pll_deinit(pll_usb);
+	pll_init(pll_sys, PLL_SYS_REFDIV, PLL_SYS_VCO_FREQ_HZ, PLL_SYS_POSTDIV1, PLL_SYS_POSTDIV2);
+	pll_init(pll_usb, PLL_USB_REFDIV, PLL_USB_VCO_FREQ_HZ, PLL_USB_POSTDIV1, PLL_USB_POSTDIV2);
+	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, SYS_CLK_HZ);
+	clock_configure_undivided(clk_peri,
+									0,
+									CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS,
+									SYS_CLK_HZ);
+	clock_configure_undivided(clk_usb,
+									0, // No GLMUX
+									CLOCKS_CLK_USB_CTRL_AUXSRC_VALUE_CLKSRC_PLL_USB,
+									USB_CLK_HZ);
+	clock_configure_undivided(clk_adc,
+									0, // No GLMUX
+									CLOCKS_CLK_ADC_CTRL_AUXSRC_VALUE_CLKSRC_PLL_USB,
+									USB_CLK_HZ);
+	clock_configure_undivided(clk_hstx,
+									0,
+									CLOCKS_CLK_HSTX_CTRL_AUXSRC_VALUE_CLK_SYS,
+									SYS_CLK_HZ);
+	
+	stdio_init_all();
+	sleep_ms(1000);
+}
+

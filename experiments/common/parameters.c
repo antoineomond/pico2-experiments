@@ -1,4 +1,4 @@
-#include "experiments.h"
+#include "target_configuration.h"
 
 const struct result parameters[] = {
 	// Baseline
@@ -39,9 +39,9 @@ const struct result parameters[] = {
 	{{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0xf0, VREG_VOLTAGE_0_80, true}, 3.49},
 
 	// lposc Min frequency (no trim), min voltage
-	{{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_1_10, true}, 5.43},
-	{{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_1_00, true}, 4.53},
-	{{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_0_90, true}, 3.9},
-	{{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_0_80, true}, 3.49}
+	//{{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_1_10, true}, 5.43},
+	//{{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_1_00, true}, 4.53},
+	//{{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_0_90, true}, 3.9},
+	//{{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_0_80, true}, 3.49}
 };
 const uint size_parameters = sizeof(parameters)/sizeof(parameters[0]);
