@@ -18,15 +18,16 @@ clock_colors <- c(
 	"LPOSC 0.80V"  = "dark green"
 )
 freqs <- c(
-	"LPOSC 1.10V (baseline)" = 20000,
-	"LPOSC 1.00V"  = 21000,
-	"LPOSC 0.90V"   = 22000,
-	"LPOSC 0.80V"  = 23000
+	"LPOSC 1.10V (baseline)" = 20000000,
+	"LPOSC 1.00V"  = 21000000,
+	"LPOSC 0.90V"   = 22000000,
+	"LPOSC 0.80V"  = 23000000
 )
 max_expe_num <- 23
 df <- read.csv(paste(name, ".csv", sep=""))
 x_power_median <- 600
 y_power_median_offset <- 0.05
 y_energy_offset <- 50
-x_clock_freq <- 25 
+x_clock_freq <- 450 
 y_max <- 25
+clock_freq_unit <- "kHz"

@@ -24,3 +24,4 @@ y_power_median_offset <- 2
 y_energy_offset <- 20
 x_clock_freq <- 33
 y_max <- 85
+clock_freq_unit <- "MHz"
