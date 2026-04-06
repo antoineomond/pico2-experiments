@@ -1,4 +1,4 @@
-name <- paste(folder, "/minimums-pll", sep="")
+name <- paste(folder, "minimums-pll", sep="")
 confs <- c(
 	"PLL (baseline)",
 	"PLL (min f)",

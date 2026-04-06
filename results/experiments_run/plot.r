@@ -5,7 +5,8 @@ library(rlang)
 library(patchwork)
 library(stringr)
 options(dplyr.print_max = 1e9, pillar.width = Inf)
-folder = "with_subsystems"
+#folder = "with_subsystems/"
+folder = ""
 for (expe in c("baseline.r", "minimums-pll.r", "minimums-rosc.r", "minimums-xosc.r", "minimums_lposc_default_freq.r", "minimums_lposc_min_freq.r", "minimums_lposc_max_freq.r")) {
 	source(expe)
 	#source("baseline.r")
@@ -77,6 +78,12 @@ for (expe in c("baseline.r", "minimums-pll.r", "minimums-rosc.r", "minimums-xosc
 		#scale_x_discrete(labels = function(x) str_wrap(x, width = 7)) +
 		scale_fill_manual(name = "Processor clock", values = clock_colors) +
 		theme(aspect.ratio = 3/1, legend.position = "none", axis.text.x = element_text(angle = 45, size = 8, hjust = 1))
+	
+	#p2 <- p2 + guides(color = "none", fill = "none", linetype = "none")
+	#
+	#combined_plot <- (p1 + p2) + 
+  #plot_layout(guides = "collect") & 
+  #theme(legend.position = "top")
 
 	ggsave(paste("/home/aomond/research/projet_sensor_loic_2025/pico/paper_mcu/images/", name, ".pdf", sep=""), plot=p1 + p2 + plot_layout(guides = 'collect'))
 }

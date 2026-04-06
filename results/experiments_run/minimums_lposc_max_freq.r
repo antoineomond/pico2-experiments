@@ -1,4 +1,4 @@
-name <- paste(folder, "/minimums_lposc_max_freq", sep="")
+name <- paste(folder, "minimums_lposc_max_freq", sep="")
 confs <- c(
 	"LPOSC 1.10V (baseline)",
 	"LPOSC 1.00V",

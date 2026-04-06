@@ -1,5 +1,6 @@
-name <- "all-wall"
+name <- "all-wall-10-iters"
 df <- read.csv(paste(name, ".csv", sep=""))
+df <- df[df$iteration_num <= 6, ]
 
 write.csv(df[df$expe_num >= 0 & df$expe_num <= 17, ], "baseline.csv")
 pll <- df[df$expe_num >= 18 & df$expe_num <= 41, ]
