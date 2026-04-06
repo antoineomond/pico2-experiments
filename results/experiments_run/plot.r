@@ -5,8 +5,9 @@ library(rlang)
 library(patchwork)
 library(stringr)
 options(dplyr.print_max = 1e9, pillar.width = Inf)
-#folder = "with_subsystems/"
-folder = ""
+folder = "with_subsystems/"
+#folder = ""
+#for (expe in c("minimums-pll.r")) {
 for (expe in c("baseline.r", "minimums-pll.r", "minimums-rosc.r", "minimums-xosc.r", "minimums_lposc_default_freq.r", "minimums_lposc_min_freq.r", "minimums_lposc_max_freq.r")) {
 	source(expe)
 	#source("baseline.r")

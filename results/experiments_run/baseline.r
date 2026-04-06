@@ -14,7 +14,7 @@ clock_colors <- c(
 freqs <- c(
 	"PLL"   = 150000000,
 	"XOSC"  = 12000000,
-	"ROSC"  = 10887000,
+	"ROSC"  = 11100000,
 	"LPOSC" = 20000
 )
 df <- read.csv(paste(name, ".csv", sep=""))

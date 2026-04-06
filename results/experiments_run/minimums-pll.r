@@ -26,12 +26,14 @@ freqs <- c(
 df <- read.csv(paste(name, ".csv", sep=""))
 max_expe_num <- 23
 
-#df <- df %>%
-#	filter(expe_num %in% c(0:5, 12:17, 30:35))
+df <- df %>%
+	filter(expe_num > 5)
 
-#df_baseline <- read.csv("baseline.csv")
+df_baseline <- read.csv(paste(folder, "baseline.csv", sep=""))
+df_baseline <- df_baseline %>%
+	filter(expe_num < 6)
 #df_baseline$expe_num <- df_baseline$expe_num + max_expe_num+1 
-#df <- rbind(df, df_baseline)
+df <- rbind(df, df_baseline)
 #df <- df %>% filter(expe_num < max_expe_num+6)
 #max_expe_num <- max_expe_num+6
 #df$expe_num[df$expe_num == 52] <- 53 # slight hack due to pll expes doing mat mut too fast yielding no record in the csv (to fix)
