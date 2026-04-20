@@ -14,8 +14,8 @@
 #include "hardware/powman.h"
 
 extern float TIME_RATE;
-extern const struct result parameters[];
-extern const uint size_parameters;
+extern const struct config configs[];
+extern const uint size_configs;
 
 void pull_down_gpios() {
 	for (int gpio = 0; gpio < NUM_BANK0_GPIOS; gpio++) {
@@ -181,48 +181,28 @@ uint leverage_clock_source_pll(uint vco_freq, uint div1, uint div2) {
 }
 
 
-uint switch_configuration_from_parameter(struct params p) {
+uint switch_configuration_from_parameter(const struct config* config) {
 	// Set the voltage, clock source and frequency (measure the frequency for rosc and lposc)
 	// pll must be deactivated to reach vreg outputs below 0.9V
 	leverage_clock_source_xosc();
 	sleep_ms(100);
-	vreg_set_voltage(p.vreg_output);
+	vreg_set_voltage(config->vreg_output);
 	sleep_ms(100);
 	
-	// Set clock source with default frequencies
 	uint clk_src_freq;
-	if(p.clock_source == PLL_SYS) {
-		clk_src_freq = leverage_clock_source_pll(p.pll_vco_freq, p.pll_div1, p.pll_div2);
+	if(config->clock_source == PLL_SYS) {
+		clk_src_freq = leverage_clock_source_pll(config->pll_vco_freq, config->pll_div1, config->pll_div2);
 	}
-	if(p.clock_source == XOSC) {
+	if(config->clock_source == XOSC) {
 		clk_src_freq = leverage_clock_source_xosc();
 	}
-	if(p.clock_source == ROSC) {
-		clk_src_freq = leverage_clock_source_rosc(p.rosc_div, p.rosc_range, p.rosc_drive_freqa, p.rosc_drive_freqb);
+	if(config->clock_source == ROSC) {
+		clk_src_freq = leverage_clock_source_rosc(config->rosc_div, config->rosc_range, config->rosc_drive_freqa, config->rosc_drive_freqb);
 	}
-	if(p.clock_source == LPOSC) {
-		clk_src_freq = leverage_clock_source_lposc(p.lposc_trim);
+	if(config->clock_source == LPOSC) {
+		clk_src_freq = leverage_clock_source_lposc(config->lposc_trim);
 	}
 	return clk_src_freq;
-}
-
-struct result* switch_configuration(float target_power_median_mw) {
-	// Search closest configuration that makes the rpi use a power median lower than target_power_median_mw
-	struct result *param = malloc(sizeof(struct result));
-	bool init = false;
-	for (uint i = 0; i < size_parameters; i++) {
-		if(parameters[i].power_median_mw <= target_power_median_mw) {
-			if(!init) {
-				*param = parameters[i];
-				init = true;
-			}
-			else if (init && param->power_median_mw <= parameters[i].power_median_mw) {
-				*param = parameters[i];
-			}
-		}
-	}
-	switch_configuration_from_parameter(param->p);
-	return param;
 }
 
 void switch_to_default_configuration() {

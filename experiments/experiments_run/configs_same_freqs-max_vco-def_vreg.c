@@ -1,6 +1,6 @@
 #include "target_configuration.h"
 
-const struct params expes_same_freqs_max_vco_def_vreg[] = {
+const struct config expes_same_freqs_max_vco_def_vreg[] = {
 	// 30 MHz, default VREG
 	{PLL_SYS, 1540*MHZ, 7, 7, 0, 0, 0, 0, 0, VREG_DEFAULT, true},
 	{ROSC, 0, 0, 0, 5, 0xfa4, 0x7777, 0x0577, 0, VREG_DEFAULT, true},

@@ -1,6 +1,6 @@
 #include "target_configuration.h"
 
-const struct params expes_same_freqs_min_vco_min_vreg[] = {
+const struct config expes_same_freqs_min_vco_min_vreg[] = {
 	// 30 MHz, min VREG
 	{PLL_SYS, 760*MHZ, 5, 5, 0, 0, 0, 0, 0, VREG_VOLTAGE_0_90, true},
 	{ROSC, 0, 0, 0, 2, 0xfa7, 0x0003, 0x0017, 0, VREG_VOLTAGE_0_80, true},

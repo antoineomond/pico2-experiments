@@ -1,6 +1,6 @@
 #include "target_configuration.h"
 
-const struct params expes_minimums_xosc[] = {
+const struct config expes_minimums_xosc[] = {
 	// Min frequency, min voltage
 	{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true},
 	{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_00, true},

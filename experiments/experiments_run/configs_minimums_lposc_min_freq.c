@@ -1,6 +1,6 @@
 #include "target_configuration.h"
 
-const struct params expes_minimums_lposc_min_freq[] = {
+const struct config expes_minimums_lposc_min_freq[] = {
 	// Min frequency (no trim), min voltage
 	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_1_10, true},
 	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_1_00, true},

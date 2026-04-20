@@ -1,6 +1,6 @@
 #include "target_configuration.h"
 
-const struct params expes_minimums_lposc_default_freq[] = {
+const struct config expes_minimums_lposc_default_freq[] = {
 	// Baseline
 	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x20, VREG_VOLTAGE_1_10, true},
 	

@@ -34,7 +34,7 @@ enum CLOCK_SOURCE {
 	PLL_SYS, XOSC, ROSC, LPOSC
 };
 
-struct params {
+struct config {
 	// Clock source
 	uint clock_source;
 	
@@ -59,10 +59,6 @@ struct params {
 	// Set clock source as reference clock
 	bool set_as_ref;
 };
-struct result {
-	struct params p;
-	float power_median_mw;
-};
 
 // Clock source leverages
 uint leverage_clock_source_lposc(uint trim);
@@ -79,6 +75,5 @@ static void disable_usb();
 // Sleep mode
 void processor_deep_sleep(void);
 
-uint switch_configuration_from_parameter(struct params param);
-struct result* switch_configuration(float target_power_median_mw);
+uint switch_configuration_from_parameter(const struct config* config);
 void switch_to_default_configuration();

@@ -1,6 +1,6 @@
 #include "target_configuration.h"
 
-const struct params expes_minimums_pll[] = {
+const struct config expes_minimums_pll[] = {
 	// Baseline
 	{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, PLL_DEFAULT_POSTDIV1, PLL_DEFAULT_POSTDIV2, 0, 0, 0, 0, 0, VREG_DEFAULT, true},
 	

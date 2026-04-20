@@ -19,7 +19,7 @@ target_link_libraries(experiments
 target_include_directories(experiments PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_library(target_configuration
-	parameters.c
+	configurations.c
 	target_configuration.c
 	target_configuration.h
 )
