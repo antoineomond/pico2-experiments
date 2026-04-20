@@ -77,3 +77,4 @@ void processor_deep_sleep(void);
 
 uint switch_configuration_from_parameter(const struct config* config);
 void switch_to_default_configuration();
+void print_configuration(const struct config* config);

@@ -186,6 +186,8 @@ uint switch_configuration_from_parameter(const struct config* config) {
 	// pll must be deactivated to reach vreg outputs below 0.9V
 	leverage_clock_source_xosc();
 	sleep_ms(100);
+	vreg_disable_voltage_limit();
+	powman_clear_bits(&powman_hw->bod, 0x000001f1);
 	vreg_set_voltage(config->vreg_output);
 	sleep_ms(100);
 	
@@ -210,6 +212,9 @@ void switch_to_default_configuration() {
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_XOSC_CLKSRC, XOSC_HZ);
 	restart_all_ticks();
+	hw_clear_bits(&powman_hw->vreg_ctrl, POWMAN_PASSWORD_BITS | POWMAN_VREG_CTRL_DISABLE_VOLTAGE_LIMIT_BITS);
+	powman_clear_bits(&powman_hw->bod, 0x000001f1);
+	powman_set_bits(&powman_hw->bod, POWMAN_BOD_VSEL_RESET);
 	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 	sleep_us((int)(10*1000000*TIME_RATE));
 	pll_deinit(pll_sys);
@@ -238,3 +243,28 @@ void switch_to_default_configuration() {
 	sleep_ms(1000);
 }
 
+void print_configuration(const struct config* config) {
+	if(config->clock_source == PLL_SYS) {
+		printf("clock source: PLL\n");
+		printf("frequency vco: %dMHz\n", config->pll_vco_freq/1000000);
+		printf("divider 1: %d\n", config->pll_div1);
+		printf("divider 2: %d\n", config->pll_div2);
+	}
+	if(config->clock_source == XOSC) {
+		printf("clock source: XOSC\n");
+	}
+	if(config->clock_source == ROSC) {
+		printf("clock source: ROSC\n");
+		printf("rosc divider: %d\n", config->rosc_div);
+		printf("rosc range: 0x%x\n", config->rosc_range);
+		printf("drive strength a: 0x%x\n", config->rosc_drive_freqa);
+		printf("drive strength b: 0x%x\n", config->rosc_drive_freqb);
+	}
+	if(config->clock_source == LPOSC) {
+		printf("clock source: LPOSC\n");
+		printf("trim register value: 0x%x\n", config->lposc_trim);
+	}
+	const char* vreg_strings[] = {"0.55V", "0.60V", "0.65V", "0.70V", "0.75V", "0.80V", "0.85V", "0.90V", "0.95V", "1.00V", "1.05V", "1.10V"};
+	printf("VREG output: %s\n", vreg_strings[config->vreg_output]);
+	printf("is reference clock: %d\n", config->set_as_ref);
+}
