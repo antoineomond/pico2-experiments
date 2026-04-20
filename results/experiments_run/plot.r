@@ -7,6 +7,7 @@ library(stringr)
 options(dplyr.print_max = 1e9, pillar.width = Inf)
 #folder = "with_subsystems/"
 folder = ""
+#for (expe in c("minimums-pll.r")) {
 for (expe in c("baseline.r", "minimums-pll.r", "minimums-rosc.r", "minimums-xosc.r", "minimums_lposc_default_freq.r", "minimums_lposc_min_freq.r", "minimums_lposc_max_freq.r")) {
 	source(expe)
 	#source("baseline.r")
@@ -41,11 +42,11 @@ for (expe in c("baseline.r", "minimums-pll.r", "minimums-rosc.r", "minimums-xosc
 	p1 <- ggplot(df_by_legend_group, aes(x = current_timestamp, y = power_sample, color=legend_group, group=legend_group)) +
 		geom_line(na.rm = TRUE) +
 		geom_text(data = power_summary, aes(x=x_power_median, y = power_median+y_power_median_offset, label = paste(round(power_median,2), "mW")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
-		geom_text(data = power_summary, aes(x=x_clock_freq, y = power_median+y_power_median_offset, label = paste(round(clock_freq/1000000, 2), "MHz")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
+		geom_text(data = power_summary, aes(x=x_clock_freq, y = power_median+y_power_median_offset, label = paste(round(clock_freq/1000000, 2), clock_freq_unit)), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
 		scale_y_continuous(limits=c(0, y_max), n.breaks=15) +
 		geom_hline(data = power_summary, aes(yintercept = power_median, color = legend_group), linetype = "dashed") +
 		labs(title = "", x = "Timestamp in seconds", y = "Power usage in mW") +
-		scale_color_manual(name = "Processor clock", values = clock_colors)
+		scale_color_manual(name = "Processor clock:", values = clock_colors)
 
 	# energy
 	energy_consumption <- df %>%
@@ -65,7 +66,7 @@ for (expe in c("baseline.r", "minimums-pll.r", "minimums-rosc.r", "minimums-xosc
 		summarise(expe_name = expe_name, avg_energy = mean(energy_sample), std_energy = sd(energy_sample), .groups = "drop") %>%
 		distinct()
 
-	energy_consumption
+	#energy_consumption
 
 	p2 <- ggplot(energy_consumption, aes(x = expe_name, y = avg_energy, fill=expe_name)) +
 		geom_bar(stat = "identity", width = 0.2) +
@@ -79,11 +80,11 @@ for (expe in c("baseline.r", "minimums-pll.r", "minimums-rosc.r", "minimums-xosc
 		scale_fill_manual(name = "Processor clock", values = clock_colors) +
 		theme(aspect.ratio = 3/1, legend.position = "none", axis.text.x = element_text(angle = 45, size = 8, hjust = 1))
 	
-	#p2 <- p2 + guides(color = "none", fill = "none", linetype = "none")
-	#
-	#combined_plot <- (p1 + p2) + 
-  #plot_layout(guides = "collect") & 
-  #theme(legend.position = "top")
+	p2 <- p2 + guides(color = "none", fill = "none", linetype = "none")
+	
+	combined_plot <- (p1 + p2) + 
+  plot_layout(guides = "collect") & 
+  theme(legend.position = "top")
 
-	ggsave(paste("/home/aomond/research/projet_sensor_loic_2025/pico/paper_mcu/images/", name, ".pdf", sep=""), plot=p1 + p2 + plot_layout(guides = 'collect'))
+	ggsave(paste("/home/aomond/research/projet_sensor_loic_2025/pico/paper_mcu/images/", name, ".pdf", sep=""), plot=combined_plot)
 }

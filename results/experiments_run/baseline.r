@@ -14,7 +14,7 @@ clock_colors <- c(
 freqs <- c(
 	"PLL"   = 150000000,
 	"XOSC"  = 12000000,
-	"ROSC"  = 10887000,
+	"ROSC"  = 11100000,
 	"LPOSC" = 20000
 )
 df <- read.csv(paste(name, ".csv", sep=""))
@@ -24,3 +24,4 @@ y_power_median_offset <- 2
 y_energy_offset <- 20
 x_clock_freq <- 33
 y_max <- 85
+clock_freq_unit <- "MHz"
