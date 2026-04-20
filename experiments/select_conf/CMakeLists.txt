@@ -1,6 +1,6 @@
 add_executable(select_conf
 				select_conf.c
-				configurations.c)
+				)
 target_link_libraries(select_conf
 				pico_stdlib
 				target_configuration

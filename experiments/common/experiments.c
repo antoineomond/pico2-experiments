@@ -282,3 +282,50 @@ void led_blink(uint count) {
 		sleep_us((int)(250000*TIME_RATE));
 	}
 }
+
+void pull_down_gpios() {
+	for (int gpio = 0; gpio < NUM_BANK0_GPIOS; gpio++) {
+		gpio_set_dir(gpio, 0);
+		gpio_set_function(gpio, GPIO_FUNC_SIO);
+		if(gpio > NUM_BANK0_GPIOS - NUM_ADC_CHANNELS) {
+			gpio_disable_pulls(gpio);
+			gpio_set_input_enabled(gpio, false);
+		}
+	}
+}
+
+void turn_off_clocks() {
+	clock_hw_t *clock_hw = &clocks_hw->clk[clk_usb];
+	hw_clear_bits(&clock_hw->ctrl, CLOCKS_CLK_USB_CTRL_ENABLE_BITS);
+	clock_hw = &clocks_hw->clk[clk_adc];
+	hw_clear_bits(&clock_hw->ctrl, CLOCKS_CLK_ADC_CTRL_ENABLE_BITS);
+	clock_hw = &clocks_hw->clk[clk_hstx];
+	hw_clear_bits(&clock_hw->ctrl, CLOCKS_CLK_HSTX_CTRL_ENABLE_BITS);
+}
+
+static void disable_usb() {
+    usb_hw->phy_direct = USB_USBPHY_DIRECT_TX_PD_BITS | USB_USBPHY_DIRECT_RX_PD_BITS | USB_USBPHY_DIRECT_DM_PULLDN_EN_BITS | USB_USBPHY_DIRECT_DP_PULLDN_EN_BITS;
+    
+    usb_hw->phy_direct_override = USB_USBPHY_DIRECT_RX_DM_BITS | USB_USBPHY_DIRECT_RX_DP_BITS |          USB_USBPHY_DIRECT_RX_DD_BITS |
+        USB_USBPHY_DIRECT_OVERRIDE_TX_DIFFMODE_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_DM_PULLUP_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_TX_FSSLEW_OVERRIDE_EN_BITS |
+        USB_USBPHY_DIRECT_OVERRIDE_TX_PD_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_RX_PD_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_TX_DM_OVERRIDE_EN_BITS |
+        USB_USBPHY_DIRECT_OVERRIDE_TX_DP_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_TX_DM_OE_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_TX_DP_OE_OVERRIDE_EN_BITS |
+        USB_USBPHY_DIRECT_OVERRIDE_DM_PULLDN_EN_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_DP_PULLDN_EN_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_DP_PULLUP_EN_OVERRIDE_EN_BITS |
+        USB_USBPHY_DIRECT_OVERRIDE_DM_PULLUP_HISEL_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_DP_PULLUP_HISEL_OVERRIDE_EN_BITS;
+}
+
+static void sleep_callback(void) {}
+
+void processor_deep_sleep(void) {
+		// From pico-extras
+    // Enable deep sleep at the proc
+#ifdef __riscv
+    uint32_t bits = RVCSR_MSLEEP_POWERDOWN_BITS;
+    if (!get_core_num()) {
+        bits |= RVCSR_MSLEEP_DEEPSLEEP_BITS;
+    }
+    riscv_set_csr(RVCSR_MSLEEP_OFFSET, bits);
+#else
+    scb_hw->scr |= ARM_CPU_PREFIXED(SCR_SLEEPDEEP_BITS);
+#endif
+}

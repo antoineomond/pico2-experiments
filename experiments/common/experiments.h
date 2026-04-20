@@ -21,3 +21,9 @@ uint8_t execute_benchmarks(bool clock_source_lposc);
 
 // Others
 void led_blink(uint count);
+void pull_down_gpios();
+void turn_off_clocks();
+static void disable_usb();
+
+// Sleep mode
+void processor_deep_sleep(void);
