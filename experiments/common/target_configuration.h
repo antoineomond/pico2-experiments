@@ -106,7 +106,7 @@ static const struct config configs[] = {
 };
 static const uint size_configs = sizeof(configs)/sizeof(configs[0]);
 
-static inline  void start_all_ticks(void) {
+static inline void start_all_ticks(void) {
     uint32_t cycles = clock_get_hz(clk_ref) / MHZ;
 		if(cycles <= 0) {
 			cycles = 1;
@@ -130,7 +130,7 @@ static inline void restart_all_ticks(void) {
 }
 
 // Clock source leverages
-static inline uint leverage_clock_source_lposc(uint trim) {
+static inline uint set_clock_source_lposc(uint trim) {
 	// lposc has to be clk_ref
 	// Put xosc as clk_ref to count lposc frequency
 	xosc_init();
@@ -157,7 +157,7 @@ static inline uint leverage_clock_source_lposc(uint trim) {
 	
 	return clk_src_freq;
 }
-static inline uint leverage_clock_source_rosc(uint div, uint range, uint freqa, uint freqb) {
+static inline uint set_clock_source_rosc(uint div, uint range, uint freqa, uint freqb) {
 	rosc_enable();
 	
 	// Put xosc as clk_ref to count rosc frequency
@@ -190,7 +190,7 @@ static inline uint leverage_clock_source_rosc(uint div, uint range, uint freqa, 
 	
 	return clk_src_freq;
 }
-static inline uint leverage_clock_source_xosc() {
+static inline uint set_clock_source_xosc() {
 	xosc_init();
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
 	restart_all_ticks();
@@ -205,8 +205,9 @@ static inline uint leverage_clock_source_xosc() {
 	
 	return clk_src_freq;
 }
-static inline uint leverage_clock_source_pll(uint vco_freq, uint div1, uint div2) {
-	leverage_clock_source_xosc();
+
+static inline uint set_clock_source_pll(uint vco_freq, uint div1, uint div2) {
+	set_clock_source_xosc();
 	pll_init(pll_sys, PLL_SYS_REFDIV, vco_freq, div1, div2);
 	
 	uint clk_src_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY) * KHZ;
@@ -223,7 +224,7 @@ static inline uint leverage_clock_source_pll(uint vco_freq, uint div1, uint div2
 static inline uint switch_configuration_from_parameter(const struct config* config) {
 	// Set the voltage, clock source and frequency (measure the frequency for rosc and lposc)
 	// pll must be deactivated to reach vreg outputs below 0.9V
-	leverage_clock_source_xosc();
+	set_clock_source_xosc();
 	sleep_ms(100);
 	vreg_disable_voltage_limit();
 	powman_clear_bits(&powman_hw->bod, 0x000001f1);
@@ -232,19 +233,20 @@ static inline uint switch_configuration_from_parameter(const struct config* conf
 	
 	uint clk_src_freq;
 	if(config->clock_source == PLL_SYS) {
-		clk_src_freq = leverage_clock_source_pll(config->pll_vco_freq, config->pll_div1, config->pll_div2);
+		clk_src_freq = set_clock_source_pll(config->pll_vco_freq, config->pll_div1, config->pll_div2);
 	}
 	if(config->clock_source == XOSC) {
-		clk_src_freq = leverage_clock_source_xosc();
+		clk_src_freq = set_clock_source_xosc();
 	}
 	if(config->clock_source == ROSC) {
-		clk_src_freq = leverage_clock_source_rosc(config->rosc_div, config->rosc_range, config->rosc_drive_freqa, config->rosc_drive_freqb);
+		clk_src_freq = set_clock_source_rosc(config->rosc_div, config->rosc_range, config->rosc_drive_freqa, config->rosc_drive_freqb);
 	}
 	if(config->clock_source == LPOSC) {
-		clk_src_freq = leverage_clock_source_lposc(config->lposc_trim);
+		clk_src_freq = set_clock_source_lposc(config->lposc_trim);
 	}
 	return clk_src_freq;
 }
+
 static inline void switch_to_default_configuration() {
 	xosc_init();
 	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
@@ -280,6 +282,7 @@ static inline void switch_to_default_configuration() {
 	stdio_init_all();
 	sleep_ms(1000);
 }
+
 static inline void print_configuration(const struct config* config) {
 	if(config->clock_source == PLL_SYS) {
 		printf("clock source: PLL\n");
