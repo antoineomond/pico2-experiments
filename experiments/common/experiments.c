@@ -90,10 +90,11 @@ void iteration_end(uint phase, char* buffer) {
 		printf("%s", buffer);
 	}
 	
-	watchdog_hw->scratch[1] += 1; // Next iteration
+	watchdog_hw->scratch[1] += 1; // Next experiment
 
 	// End of iteration, reset the board
 	watchdog_hw->scratch[0] = RESET_VAL;
+	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 	watchdog_reboot(0, 0, 0);
 }
 
@@ -269,6 +270,7 @@ uint8_t execute_benchmarks(bool clock_source_lposc) {
 	gpio_put(expe_pin, 1);
 	uint8_t result_mat_mul_double = benchmark_mat_mul_double(BENCH_MAT_SIZE/2, nb_iteration_mat_mul); // Uses double co-processor
 	gpio_put(expe_pin, 0);
+	sleep_us((int)(1000000*TIME_RATE));
 	return result_prime|result_multicores<<1|result_mat_mul<<2|result_mat_mul_float<<3|result_mat_mul_double<<4;
 }
 
