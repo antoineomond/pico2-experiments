@@ -104,7 +104,7 @@ static const struct config configs[] = {
 	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_0_90, true}, // 3.90 mW
 	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_0_80, true}, // 3.49 mW
 };
-static const uint size_configs = sizeof(configs)/sizeof(configs[0]);
+static const uint nb_expes = sizeof(configs)/sizeof(configs[0]);
 
 static inline void start_all_ticks(void) {
     uint32_t cycles = clock_get_hz(clk_ref) / MHZ;
