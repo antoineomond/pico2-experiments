@@ -6,7 +6,7 @@ library(patchwork)
 library(stringr)
 options(dplyr.print_max = 1e9, pillar.width = Inf)
 #folder = "with_subsystems/"
-folder = ""
+folder = "10_iterations/"
 #for (expe in c("minimums-pll.r")) {
 for (expe in c("baseline.r", "minimums-pll.r", "minimums-rosc.r", "minimums-xosc.r", "minimums_lposc_default_freq.r", "minimums_lposc_min_freq.r", "minimums_lposc_max_freq.r")) {
 	source(expe)
@@ -86,5 +86,5 @@ for (expe in c("baseline.r", "minimums-pll.r", "minimums-rosc.r", "minimums-xosc
   plot_layout(guides = "collect") & 
   theme(legend.position = "top")
 
-	ggsave(paste("/home/aomond/research/projet_sensor_loic_2025/pico/paper_mcu/images/", name, ".pdf", sep=""), plot=combined_plot)
+	ggsave(paste(name, ".pdf", sep=""), plot=combined_plot)
 }

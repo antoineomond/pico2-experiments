@@ -18,5 +18,8 @@
 - size3: prime size: 15000 alone
 - size4: prime size: 10000 alone
 
+### Observations
+- It looks like the reason why energy consumption varies may be due to the power usage variations when doing benchmarks. The lower the power usage, the lower the variations of power usage between benchmarks. This may be the reason why the power usage variation and energy consumption varies non-linerarly between size of benchmarks.
+
 ## Multiple iterations
 - The standard deviation for power usage between iterations seems to stays more or less the same whether it is when unplugging/replugging manually or when rebooting from software
