@@ -67,6 +67,13 @@ struct config {
 extern float TIME_RATE;
 
 static const struct config configs[] = {
+	/* pll min f v */
+	//{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_VOLTAGE_0_90, true},																						 // 22.62 mW
+	//{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_VOLTAGE_0_95, true},																						 // 22.62 mW
+	//{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_00, true},																				 // 22.62 mW
+	//{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_05, true},																				 // 22.62 mW
+	//{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true},																				 // 22.62 mW
+
 	/* Bench compute time per clock freq */
 	//{PLL_SYS, 1500 * MHZ, 5, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true},															 // 73.99 mW
 	//{PLL_SYS, 1500 * MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true},
