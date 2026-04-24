@@ -247,26 +247,38 @@ uint8_t execute_benchmarks(bool clock_source_lposc) {
 	sleep_us((int)(10*US*TIME_RATE));
 	uint bench_prime_size = clock_source_lposc ? BENCH_PRIME_SIZE_LPOSC : BENCH_PRIME_SIZE;
 	uint nb_iteration_mat_mul = clock_source_lposc ? NB_ITERATIONS_MAT_MUL_LPOSC : NB_ITERATIONS_MAT_MUL;
+	
+	// Noop
 	gpio_put(expe_pin, 1);
 	benchmark_noop(BENCH_NOOP_SIZE); // Uses one CPU core
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
+	
+	// Prime
 	gpio_put(expe_pin, 1);
 	uint8_t result_prime = benchmark_prime(bench_prime_size); // Uses one CPU core
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
+	
+	// Prime multicores
 	gpio_put(expe_pin, 1);
 	uint8_t result_multicores = benchmark_prime_multicores(bench_prime_size); // Uses both cores
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
+	
+	// Mat mul int
 	gpio_put(expe_pin, 1);
 	uint8_t result_mat_mul = benchmark_mat_mul(BENCH_MAT_SIZE, nb_iteration_mat_mul); // Uses RAM
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
+	
+	// Mat mul float
 	gpio_put(expe_pin, 1);
 	uint8_t result_mat_mul_float = benchmark_mat_mul_float(BENCH_MAT_SIZE, nb_iteration_mat_mul); // Uses float co-processor
 	gpio_put(expe_pin, 0);
 	sleep_us((int)(100000*TIME_RATE));
+	
+	// Mat mul double
 	gpio_put(expe_pin, 1);
 	uint8_t result_mat_mul_double = benchmark_mat_mul_double(BENCH_MAT_SIZE/2, nb_iteration_mat_mul); // Uses double co-processor
 	gpio_put(expe_pin, 0);
