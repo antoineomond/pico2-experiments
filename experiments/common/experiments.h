@@ -17,7 +17,7 @@ uint8_t benchmark_prime_multicores(uint benchmark_size);
 uint8_t benchmark_mat_mul(uint benchmark_size, uint nb_iteration_mat_mul);
 uint8_t benchmark_mat_mul_float(uint benchmark_size, uint nb_iteration_mat_mul);
 uint8_t benchmark_mat_mul_double(uint benchmark_size, uint nb_iteration_mat_mul);
-uint8_t execute_benchmarks(bool clock_source_lposc);
+uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run);
 
 // Others
 void led_blink(uint count);
@@ -27,3 +27,5 @@ static void disable_usb();
 
 // Sleep mode
 void processor_deep_sleep(void);
+
+void print_configurations_csv(void* configurations, uint nb_expes, uint8_t benchmarks_to_run);

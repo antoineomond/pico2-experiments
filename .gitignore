@@ -1,7 +1,6 @@
 build/
 openocd/
 .cache/
-validation*.csv
 rpi4_mountpoint/
 execute_expe.sh
 
@@ -34,3 +33,7 @@ main.pdf
 
 # other
 .fuse*
+
+# csvs and pdfs ignored by default
+*.csv
+*.pdf
