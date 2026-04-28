@@ -4,39 +4,24 @@ library("dplyr")
 library(rlang)
 library(patchwork)
 library(stringr)
-#options(dplyr.print_max = 1e9, pillar.width = Inf)
+options(dplyr.print_max = 1e9, pillar.width = Inf)
+baseline_f <- function(df_input) {
+	df_input <- df_input %>%
+		filter(clock_source %in% c("PLL", "XOSC", "ROSC")) %>%
+		filter(vreg_output %in% c("1.10V")) %>%
+		filter(clock_freq.y %in% c("150001000", "12000000", "11029000"))
+}
+pll_f <- function(df_input) {
+	df_input <- df_input %>%
+		filter(clock_source %in% c("PLL")) %>%
+		filter(vreg_output %in% c("1.10V", "0.90V")) %>%
+		filter(clock_freq.y%/%1000000 %in% c(150, 15))
+}
 clock_colors <- c(
 	"PLL"   = "black",
 	"XOSC"  = "purple",
 	"ROSC"  = "brown",
 	"LPOSC" = "dark green"
-)
-freqs <- c(
-	"PLL"   = 150000000,
-	"XOSC"  = 12000000,
-	"ROSC"  = 11100000,
-	"PLL (lowest f)"    = 15429000, 
-	"PLL (lowest v)"    = 150000000, 
-	"PLL (lowest f v)"  = 15428000,
-	"ROSC (lowest f)"   = 2937000, 
-	"ROSC (lowest v)"   = 3927000, 
-	"ROSC (lowest f v)" = 1051000,
-	"XOSC (baseline)" = 12000000,
-	"XOSC (1.00V)" = 12000000,
-	"XOSC (0.90V)" = 12000000,
-	"XOSC (0.80V) (lowest v)" = 12000000,
-	"LPOSC 1.10V (baseline)" = 29000000,
-	"LPOSC 1.00V"  = 30000000,
-	"LPOSC 0.90V"   = 31000000,
-	"LPOSC 0.80V"  = 33000000,
-	"LPOSC 1.10V (baseline)" = 33000000,
-	"LPOSC 1.00V"  = 34000000,
-	"LPOSC 0.90V"   = 35000000,
-	"LPOSC 0.80V"  = 36000000,
-	"LPOSC 1.10V (baseline)" = 20000000,
-	"LPOSC 1.00V"  = 21000000,
-	"LPOSC 0.90V"   = 22000000,
-	"LPOSC 0.80V"  = 23000000
 )
 x_power_median <- 60
 y_power_median_offset <- 2
@@ -44,7 +29,7 @@ y_energy_offset <- 20
 x_clock_freq <- 33
 y_max <- 85
 clock_freq_unit <- "MHz"
-folder = "energy_benchmarks/"
+folder = ""
 name <- paste(folder, "results", sep="")
 df <- read.csv(paste(name, ".csv", sep=""))
 df <- df %>%
@@ -57,13 +42,13 @@ df <- df %>%
 	) %>%
 	select(-config_row)
 
-df <- df %>% 
-	filter(expe_num <= 17)
-write.csv(df, "filtered.csv")
+#write.csv(df, "woeifjwf.csv")
+write.csv(df, "merged.csv")
+baseline_f(df)
 
 # power
 power_summary <- df %>%
-	group_by(clock_source) %>%
+	group_by(clock_source, vreg_output) %>%
 	summarise(
 		power_median = median(power_sample, na.rm = TRUE)
 		#clock_freq = freqs[unique(legend_group)]
@@ -88,7 +73,7 @@ energy_consumption <- df %>%
 	summarise(clock_source = clock_source, avg_energy = mean(energy_sample), std_energy = sd(energy_sample), .groups = "drop") %>%
 	distinct()
 
-#energy_consumption
+#write.csv(energy_consumption, "energy_consumption.csv") 
 
 p2 <- ggplot(energy_consumption, aes(x = clock_source, y = avg_energy, fill=clock_source)) +
 	geom_bar(stat = "identity", width = 0.2) +

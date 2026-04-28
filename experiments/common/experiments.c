@@ -3,6 +3,7 @@
 #include "pico/stdlib.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "pico/multicore.h"
 #include "hardware/clocks.h"
 #include "hardware/structs/usb.h"
@@ -74,7 +75,7 @@ void iteration_end(uint phase, char* buffer) {
 		xosc_init();
 		clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
 		clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_XOSC_CLKSRC, XOSC_HZ);
-		sleep_us((int)(10*US*TIME_RATE));
+		sleep_us((int)(1*US*TIME_RATE));
 		vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
 		pll_deinit(pll_sys);
 		pll_deinit(pll_usb);
@@ -359,19 +360,14 @@ void processor_deep_sleep(void) {
 #endif
 }
 
-void print_configurations_csv(void* configurations, uint nb_expes, uint8_t benchmarks_to_run) {
-	stdio_init_all();
-	sleep_ms(1000);
+void print_configurations_csv(char* buffer, void* configurations, uint nb_expes, uint8_t benchmarks_to_run, uint clock_freq) {
 	const char* benchmark_names[] = {"noop", "prime", "prime_multicores", "mat_mul", "mat_mul_float", "mat_mul_double"};
 	const char* vreg_strings[] = {"0.55V", "0.60V", "0.65V", "0.70V", "0.75V", "0.80V", "0.85V", "0.90V", "0.95V", "1.00V", "1.05V", "1.10V"};
 	const char* clk_name[] = {"PLL", "XOSC", "ROSC", "LPOSC"};
-	const struct config* configurations_to_print = (const struct config*) configurations;
-	printf("clock_source,pll_vco_freq,pll_div1,pll_div2,rosc_div,rosc_range,rosc_drive_freqa,rosc_drive_freqb,lposc_trim,vreg_output,set_as_ref,benchmark_name\n");
-	for (int expe_num = 0; expe_num < nb_expes; expe_num++) {
-		struct config conf = configurations_to_print[expe_num];
-		for (int bench_num = 0; bench_num < NB_BENCHMARKS; bench_num++) {
-			if(benchmarks_to_run & (1 << bench_num))
-				printf("%s,%d,%d,%d,%d,%d,%d,%d,0x%.3x,%s,%b,%s\n", clk_name[conf.clock_source], conf.pll_vco_freq, conf.pll_div1, conf.pll_div2, conf.rosc_div, conf.rosc_range, conf.rosc_drive_freqa, conf.rosc_drive_freqb, conf.lposc_trim, vreg_strings[conf.vreg_output], conf.set_as_ref, benchmark_names[bench_num]);
+	const struct config conf = *(const struct config*) configurations;
+	for (int bench_num = 0; bench_num < NB_BENCHMARKS; bench_num++) {
+		if(benchmarks_to_run & (1 << bench_num)) {
+			sprintf(buffer+strlen(buffer), "%s,%d,%d,%d,%d,%d,%d,%d,0x%.3x,%s,%b,%s,%d\n", clk_name[conf.clock_source], conf.pll_vco_freq, conf.pll_div1, conf.pll_div2, conf.rosc_div, conf.rosc_range, conf.rosc_drive_freqa, conf.rosc_drive_freqb, conf.lposc_trim, vreg_strings[conf.vreg_output], conf.set_as_ref, benchmark_names[bench_num], clock_freq);
 		}
 	}
 }

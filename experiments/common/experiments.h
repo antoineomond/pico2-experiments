@@ -28,4 +28,4 @@ static void disable_usb();
 // Sleep mode
 void processor_deep_sleep(void);
 
-void print_configurations_csv(void* configurations, uint nb_expes, uint8_t benchmarks_to_run);
+void print_configurations_csv(char* buffer, void* configurations, uint nb_expes, uint8_t benchmarks_to_run, uint clock_freq);
