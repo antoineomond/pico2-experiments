@@ -10,12 +10,49 @@ baseline_f <- function(df_input) {
 		filter(clock_source %in% c("PLL", "XOSC", "ROSC")) %>%
 		filter(vreg_output %in% c("1.10V")) %>%
 		filter(clock_freq.y %in% c("150001000", "12000000", "11029000"))
+	return(df_input)
 }
 pll_f <- function(df_input) {
 	df_input <- df_input %>%
 		filter(clock_source %in% c("PLL")) %>%
 		filter(vreg_output %in% c("1.10V", "0.90V")) %>%
 		filter(clock_freq.y%/%1000000 %in% c(150, 15))
+	return(df_input)
+}
+rosc_f <- function(df_input) {
+	df_input <- df_input %>%
+		filter(clock_source %in% c("ROSC")) %>%
+		filter(vreg_output %in% c("1.10V", "0.80V")) %>%
+		filter(clock_freq.y%/%1000000 %in% c(11, 2, 3, 1))
+	return(df_input)
+}
+xosc_f <- function(df_input) {
+	df_input <- df_input %>%
+		filter(clock_source %in% c("XOSC")) %>%
+		filter(vreg_output %in% c("1.10V", "1.00V", "0.90V", "0.80V")) %>%
+		filter(clock_freq.y%/%1000000 %in% c(12))
+	return(df_input)
+}
+lposc_dft_f <- function(df_input) {
+	df_input <- df_input %>%
+		filter(clock_source %in% c("LPOSC")) %>%
+		filter(vreg_output %in% c("1.10V", "1.00V", "0.90V", "0.80V")) %>%
+		filter(lposc_trim %in% c(0x020))
+	return(df_input)
+}
+lposc_max_f <- function(df_input) {
+	df_input <- df_input %>%
+		filter(clock_source %in% c("LPOSC")) %>%
+		filter(vreg_output %in% c("1.10V", "1.00V", "0.90V", "0.80V")) %>%
+		filter(lposc_trim %in% c(0x0f0))
+	return(df_input)
+}
+lposc_min_f <- function(df_input) {
+	df_input <- df_input %>%
+		filter(clock_source %in% c("LPOSC")) %>%
+		filter(vreg_output %in% c("1.10V", "1.00V", "0.90V", "0.80V")) %>%
+		filter(lposc_trim %in% c(0x000))
+	return(df_input)
 }
 clock_colors <- c(
 	"PLL"   = "black",
@@ -23,11 +60,8 @@ clock_colors <- c(
 	"ROSC"  = "brown",
 	"LPOSC" = "dark green"
 )
-x_power_median <- 60
-y_power_median_offset <- 2
 y_energy_offset <- 20
 x_clock_freq <- 33
-y_max <- 85
 clock_freq_unit <- "MHz"
 folder = ""
 name <- paste(folder, "results", sep="")
@@ -44,23 +78,27 @@ df <- df %>%
 
 #write.csv(df, "woeifjwf.csv")
 write.csv(df, "merged.csv")
-baseline_f(df)
+df <- lposc_min_f(df)
 
 # power
 power_summary <- df %>%
-	group_by(clock_source, vreg_output) %>%
+	group_by(clock_source, vreg_output, clock_freq.y) %>%
 	summarise(
 		power_median = median(power_sample, na.rm = TRUE)
 		#clock_freq = freqs[unique(legend_group)]
 	)
-p1 <- ggplot(df, aes(x = current_timestamp, y = power_sample, color=clock_source, group=clock_source)) +
+mtimestamp <- max(df$current_timestamp, na.rm = TRUE)
+df$gp <- interaction(df$clock_source, df$vreg_output, paste(round(df$clock_freq.y/1000000, 1), "MHz", sep=""))
+p1 <- ggplot(df, aes(x = current_timestamp, y = power_sample, color=gp, group=gp)) +
 	geom_line(na.rm = TRUE) +
-	geom_text(data = power_summary, aes(x=x_power_median, y = power_median+y_power_median_offset, label = paste(round(power_median,2), "mW")), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
-	geom_hline(data = power_summary, aes(yintercept = power_median, color = clock_source), linetype = "dashed") +
+	geom_hline(data = power_summary, aes(yintercept = power_median), linetype = "dashed") +
+	geom_label(data = power_summary, aes(x=mtimestamp*1.05, y = power_median, label = paste(round(power_median,2), "mW")), hjust = "left", show.legend = FALSE, inherit.aes = FALSE) +
 	#geom_text(data = power_summary, aes(x=x_clock_freq, y = power_median+y_power_median_offset, label = paste(round(clock_freq/1000000, 2), clock_freq_unit)), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
-	scale_y_continuous(limits=c(0, y_max), n.breaks=15) +
-	labs(title = "", x = "Timestamp in seconds", y = "Power usage in mW") +
-	scale_color_manual(name = "Processor clock:", values = clock_colors)
+	#scale_y_continuous(limits=c(0, y_max), n.breaks=15) +
+	scale_x_continuous(expand = expansion(mult = c(0, 0.3))) +
+	scale_y_continuous(n.breaks=15) +
+	labs(fill="Processor clock:", title = "", x = "Timestamp in seconds", y = "Power usage in mW")
+	#scale_color_manual(name = "Processor clock:")
 
 # energy
 energy_consumption <- df %>%
@@ -70,12 +108,12 @@ energy_consumption <- df %>%
 	ungroup() %>%
 	# compute avg_energy and energy_sample
 	group_by(expe_num) %>%
-	summarise(clock_source = clock_source, avg_energy = mean(energy_sample), std_energy = sd(energy_sample), .groups = "drop") %>%
+	summarise(gp = gp, avg_energy = mean(energy_sample), std_energy = sd(energy_sample), .groups = "drop") %>%
 	distinct()
 
 #write.csv(energy_consumption, "energy_consumption.csv") 
 
-p2 <- ggplot(energy_consumption, aes(x = clock_source, y = avg_energy, fill=clock_source)) +
+p2 <- ggplot(energy_consumption, aes(x = gp, y = avg_energy, fill=gp)) +
 	geom_bar(stat = "identity", width = 0.2) +
 	geom_errorbar(aes(ymin = avg_energy - std_energy, ymax = avg_energy + std_energy), width = 0.2) +
 	geom_text(aes(label = round(avg_energy), y = avg_energy + y_energy_offset)) +
@@ -84,7 +122,7 @@ p2 <- ggplot(energy_consumption, aes(x = clock_source, y = avg_energy, fill=cloc
 		title = ""
 	) +
 	#scale_x_discrete(labels = function(x) str_wrap(x, width = 7)) +
-	scale_fill_manual(name = "Processor clock", values = clock_colors) +
+	#scale_fill_manual(name = "Processor clock") +
 	theme(aspect.ratio = 3/1, legend.position = "none", axis.text.x = element_text(angle = 45, size = 8, hjust = 1))
 
 p2 <- p2 + guides(color = "none", fill = "none", linetype = "none")
