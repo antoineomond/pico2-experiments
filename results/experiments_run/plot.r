@@ -10,14 +10,16 @@ baseline_f <- function(df_input) {
 		filter(clock_source %in% c("PLL", "XOSC", "ROSC")) %>%
 		filter(vreg_output %in% c("1.10V")) %>%
 		filter(clock_freq.y %in% c("150001000", "12000000", "11029000"))
-	return(df_input)
+	#return(df_input)
+	return(list(df_input, c("PLL", "XOSC", "ROSC")))
 }
+level_names <- c("PLL", "XOSC", "ROSC")
 pll_f <- function(df_input) {
 	df_input <- df_input %>%
 		filter(clock_source %in% c("PLL")) %>%
 		filter(vreg_output %in% c("1.10V", "0.90V")) %>%
 		filter(clock_freq.y%/%1000000 %in% c(150, 15))
-	return(df_input)
+	return(list(df_input, c("PLL (baseline)", "PLL (lowest f)", "PLL (lowest v)", "PLL (lowest f v)")))
 }
 rosc_f <- function(df_input) {
 	df_input <- df_input %>%
@@ -78,7 +80,10 @@ df <- df %>%
 
 #write.csv(df, "woeifjwf.csv")
 write.csv(df, "merged.csv")
-df <- lposc_min_f(df)
+res <- pll_f(df)
+df <- res[[1]]
+level_names <- res[[2]]
+#df <- baseline_f(df)
 
 # power
 power_summary <- df %>%
@@ -89,15 +94,17 @@ power_summary <- df %>%
 	)
 mtimestamp <- max(df$current_timestamp, na.rm = TRUE)
 df$gp <- interaction(df$clock_source, df$vreg_output, paste(round(df$clock_freq.y/1000000, 1), "MHz", sep=""))
+#levels(df$gp) <- level_names
 p1 <- ggplot(df, aes(x = current_timestamp, y = power_sample, color=gp, group=gp)) +
 	geom_line(na.rm = TRUE) +
 	geom_hline(data = power_summary, aes(yintercept = power_median), linetype = "dashed") +
-	geom_label(data = power_summary, aes(x=mtimestamp*1.05, y = power_median, label = paste(round(power_median,2), "mW")), hjust = "left", show.legend = FALSE, inherit.aes = FALSE) +
+	geom_label_repel(data = power_summary, aes(x=mtimestamp*1.05, y = power_median, label = paste(round(power_median,2), "mW")), hjust = "left", show.legend = FALSE, inherit.aes = FALSE, direction = "y") +
 	#geom_text(data = power_summary, aes(x=x_clock_freq, y = power_median+y_power_median_offset, label = paste(round(clock_freq/1000000, 2), clock_freq_unit)), hjust = 1.1, vjust=-0.4, show.legend = FALSE) +
 	#scale_y_continuous(limits=c(0, y_max), n.breaks=15) +
 	scale_x_continuous(expand = expansion(mult = c(0, 0.3))) +
 	scale_y_continuous(n.breaks=15) +
-	labs(fill="Processor clock:", title = "", x = "Timestamp in seconds", y = "Power usage in mW")
+	labs(fill="Processor clock:", title = "", x = "Timestamp in seconds", y = "Power usage in mW") +
+	scale_color_discrete(name = "Configuration:", labels = level_names)
 	#scale_color_manual(name = "Processor clock:")
 
 # energy
@@ -123,6 +130,7 @@ p2 <- ggplot(energy_consumption, aes(x = gp, y = avg_energy, fill=gp)) +
 	) +
 	#scale_x_discrete(labels = function(x) str_wrap(x, width = 7)) +
 	#scale_fill_manual(name = "Processor clock") +
+	scale_color_discrete(labels = level_names) +
 	theme(aspect.ratio = 3/1, legend.position = "none", axis.text.x = element_text(angle = 45, size = 8, hjust = 1))
 
 p2 <- p2 + guides(color = "none", fill = "none", linetype = "none")
