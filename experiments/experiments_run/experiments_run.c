@@ -4,9 +4,9 @@
 #include "target_configuration.h"
 
 // Select parameters
-#define PHASE 0
+#define PHASE 1
 #define BENCHMARKS_TO_RUN 0b111111
-#define PRINT_CONFS_CSV 1
+#define PRINT_CONFS_CSV 0
 //////////////////////////////////////
 
 #define LINE_SIZE 70

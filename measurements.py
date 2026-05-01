@@ -8,7 +8,7 @@ from datetime import datetime
 from statistics import StatisticsError, mean, stdev, median
 
 NB_BENCHMARKS = 6
-DEADLINE_ITERATION = 7200
+DEADLINE_ITERATION = 3600
 EXPE_PIN = 27
 expe_num = 0
 done = 0
