@@ -245,17 +245,20 @@ uint8_t benchmark_mat_mul_double(uint benchmark_size, uint nb_iteration_mat_mul)
 	return correct;
 }
 
-uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run) {
+uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run, struct bench_sizes bench_sizes) {
 	// Sleep 10 seconds before starting benchmarks
 	sleep_us((int)(10*US*TIME_RATE));
 	uint bench_prime_size = clock_source_lposc ? BENCH_PRIME_SIZE_LPOSC : BENCH_PRIME_SIZE;
 	uint nb_iteration_mat_mul = clock_source_lposc ? NB_ITERATIONS_MAT_MUL_LPOSC : NB_ITERATIONS_MAT_MUL;
+	uint noop_size = bench_sizes.noop;
+	uint prime_size = clock_source_lposc?bench_sizes.prime_lposc:bench_sizes.prime;
+	uint mat_mul_iters = clock_source_lposc?bench_sizes.mat_mul_iters_lposc:bench_sizes.mat_mul_iters;
 	uint8_t results = 1; // noop result is always 1
 	
 	// Noop
 	if(benchmarks_to_run & 0b000001) {
 		gpio_put(expe_pin, 1);
-		benchmark_noop(BENCH_NOOP_SIZE); // Uses one CPU core
+		benchmark_noop(noop_size); // Uses one CPU core
 		gpio_put(expe_pin, 0);
 		sleep_us((int)(100000*TIME_RATE));
 	}
@@ -263,7 +266,7 @@ uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run) {
 	// Prime
 	if(benchmarks_to_run & 0b000010) {
 		gpio_put(expe_pin, 1);
-		results |= benchmark_prime(bench_prime_size) << 1; // Uses one CPU core
+		results |= benchmark_prime(prime_size) << 1; // Uses one CPU core
 		gpio_put(expe_pin, 0);
 		sleep_us((int)(100000*TIME_RATE));
 	}
@@ -271,7 +274,7 @@ uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run) {
 	// Prime multicores
 	if(benchmarks_to_run & 0b000100) {
 		gpio_put(expe_pin, 1);
-		results |= benchmark_prime_multicores(bench_prime_size) << 2; // Uses both cores
+		results |= benchmark_prime_multicores(prime_size) << 2; // Uses both cores
 		gpio_put(expe_pin, 0);
 		sleep_us((int)(100000*TIME_RATE));
 	}
@@ -279,7 +282,7 @@ uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run) {
 	// Mat mul int
 	if(benchmarks_to_run & 0b001000) {
 		gpio_put(expe_pin, 1);
-		results |= benchmark_mat_mul(BENCH_MAT_SIZE, nb_iteration_mat_mul) << 3; // Uses RAM
+		results |= benchmark_mat_mul(BENCH_MAT_SIZE, mat_mul_iters) << 3; // Uses RAM
 		gpio_put(expe_pin, 0);
 		sleep_us((int)(100000*TIME_RATE));
 	}
@@ -287,7 +290,7 @@ uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run) {
 	// Mat mul float
 	if(benchmarks_to_run & 0b010000) {
 		gpio_put(expe_pin, 1);
-		results |= benchmark_mat_mul_float(BENCH_MAT_SIZE, nb_iteration_mat_mul) << 4; // Uses float co-processor
+		results |= benchmark_mat_mul_float(BENCH_MAT_SIZE, mat_mul_iters) << 4; // Uses float co-processor
 		gpio_put(expe_pin, 0);
 		sleep_us((int)(100000*TIME_RATE));
 	}
@@ -295,7 +298,7 @@ uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run) {
 	// Mat mul double
 	if(benchmarks_to_run & 0b100000) {
 		gpio_put(expe_pin, 1);
-		results |= benchmark_mat_mul_double(BENCH_MAT_SIZE/2, nb_iteration_mat_mul) << 5; // Uses double co-processor
+		results |= benchmark_mat_mul_double(BENCH_MAT_SIZE/2, mat_mul_iters) << 5; // Uses double co-processor
 		gpio_put(expe_pin, 0);
 	}
 	sleep_us((int)(1000000*TIME_RATE));
@@ -360,14 +363,21 @@ void processor_deep_sleep(void) {
 #endif
 }
 
-void print_configurations_csv(char* buffer, void* configurations, uint nb_expes, uint8_t benchmarks_to_run, uint clock_freq) {
+uint bench_size_by_bench_num(struct bench_sizes bench_sizes, uint bench_num, bool is_lposc) {
+	if(bench_num == 0) return bench_sizes.noop;
+	if(bench_num == 1 || bench_num == 2) return is_lposc?bench_sizes.prime_lposc:bench_sizes.prime;
+	return is_lposc?bench_sizes.mat_mul_iters_lposc:bench_sizes.mat_mul_iters;
+}
+
+void print_configurations_csv(char* buffer, void* configurations, uint nb_expes, uint8_t benchmarks_to_run, struct bench_sizes bench_sizes, uint b_num, bool is_lposc, uint clock_freq) {
 	const char* benchmark_names[] = {"noop", "prime", "prime_multicores", "mat_mul", "mat_mul_float", "mat_mul_double"};
 	const char* vreg_strings[] = {"0.55V", "0.60V", "0.65V", "0.70V", "0.75V", "0.80V", "0.85V", "0.90V", "0.95V", "1.00V", "1.05V", "1.10V"};
 	const char* clk_name[] = {"PLL", "XOSC", "ROSC", "LPOSC"};
 	const struct config conf = *(const struct config*) configurations;
 	for (int bench_num = 0; bench_num < NB_BENCHMARKS; bench_num++) {
 		if(benchmarks_to_run & (1 << bench_num)) {
-			sprintf(buffer+strlen(buffer), "%s,%d,%d,%d,%d,%d,%d,%d,0x%.3x,%s,%b,%s,%d\n", clk_name[conf.clock_source], conf.pll_vco_freq, conf.pll_div1, conf.pll_div2, conf.rosc_div, conf.rosc_range, conf.rosc_drive_freqa, conf.rosc_drive_freqb, conf.lposc_trim, vreg_strings[conf.vreg_output], conf.set_as_ref, benchmark_names[bench_num], clock_freq);
+			uint bench_size = bench_size_by_bench_num(bench_sizes, bench_num, is_lposc);
+			sprintf(buffer+strlen(buffer), "%s,%d,%d,%d,%d,%d,%d,%d,0x%.3x,%s,%b,%s,%d,%d,%d\n", clk_name[conf.clock_source], conf.pll_vco_freq, conf.pll_div1, conf.pll_div2, conf.rosc_div, conf.rosc_range, conf.rosc_drive_freqa, conf.rosc_drive_freqb, conf.lposc_trim, vreg_strings[conf.vreg_output], conf.set_as_ref, benchmark_names[bench_num], bench_size, b_num, clock_freq);
 		}
 	}
 }

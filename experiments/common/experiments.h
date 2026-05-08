@@ -8,6 +8,14 @@
 #include "pico/sleep.h"
 #include "hardware/clocks.h"
 
+struct bench_sizes {
+	uint noop;
+	uint prime;
+	uint prime_lposc;
+	uint mat_mul_iters;
+	uint mat_mul_iters_lposc;
+};
+
 void iteration_init(uint phase, uint vreg_expe);
 void iteration_end(uint phase, char* buffer);
 
@@ -17,7 +25,7 @@ uint8_t benchmark_prime_multicores(uint benchmark_size);
 uint8_t benchmark_mat_mul(uint benchmark_size, uint nb_iteration_mat_mul);
 uint8_t benchmark_mat_mul_float(uint benchmark_size, uint nb_iteration_mat_mul);
 uint8_t benchmark_mat_mul_double(uint benchmark_size, uint nb_iteration_mat_mul);
-uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run);
+uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run, struct bench_sizes bench_sizes);
 
 // Others
 void led_blink(uint count);
@@ -28,4 +36,4 @@ static void disable_usb();
 // Sleep mode
 void processor_deep_sleep(void);
 
-void print_configurations_csv(char* buffer, void* configurations, uint nb_expes, uint8_t benchmarks_to_run, uint clock_freq);
+void print_configurations_csv(char* buffer, void* configurations, uint nb_expes, uint8_t benchmarks_to_run, struct bench_sizes bench_sizes, uint b_num, bool is_lposc, uint clock_freq);
