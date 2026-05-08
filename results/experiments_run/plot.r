@@ -10,14 +10,14 @@ baseline_f <- function(df_input) {
 	df_input <- df_input %>%
 		filter(clock_source %in% c("PLL", "XOSC", "ROSC")) %>%
 		filter(vreg_output %in% c("1.10V")) %>%
-		filter(clock_freq %in% c("150001000", "12000000", "11029000"))
+		filter(clock_freq %/% 1000000 %in% c(150, 12, 11))
 	return(list(df_input, c("PLL", "XOSC", "ROSC"), "baseline", baseline_mapfunc))
 }
 pll_f <- function(df_input) {
 	df_input <- df_input %>%
 		filter(clock_source %in% c("PLL")) %>%
 		filter(vreg_output %in% c("1.10V", "0.90V")) %>%
-		filter(clock_freq %/%1000000 %in% c(150, 15))
+		filter(clock_freq %/% 1000000 %in% c(150, 15))
 	return(list(df_input, c("PLL (baseline)", "PLL (lowest f)", "PLL (lowest v)", "PLL (lowest f v)"), "minimums-pll", baseline_mapfunc))
 }
 rosc_f <- function(df_input) {
@@ -57,12 +57,14 @@ lposc_min_f <- function(df_input) {
 }
 MHz <- 1000000
 kHz <- 1000
-folder = ""
+#folder = ""
+folder = "debug/energy_per_benchmark/all_benchs_10_5000_10/"
+last_benchmark <- "mat_mul_double"
 name <- paste(folder, "results", sep="")
 df <- read.csv(paste(name, ".csv", sep=""))
 df <- df %>%
   mutate(config_row = expe_num + 1)
-parameters <- read.csv("configurations.csv") 
+parameters <- read.csv(paste(folder, "configurations.csv", sep=""))
 df <- df %>%
 	left_join(
 		parameters %>% mutate(config_row = row_number()),
@@ -105,7 +107,7 @@ for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc
 
 	# energy
 	energy_consumption <- df_expe %>%
-		filter(benchmark_name == "mat_mul_double", !is.na(energy_sample)) %>%
+		filter(benchmark_name == last_benchmark, !is.na(energy_sample)) %>%
 		group_by(iteration_num, expe_num) %>%
 		slice_tail(n = 1) %>%   # last value per iteration/expe_num
 		ungroup() %>%
