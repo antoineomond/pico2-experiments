@@ -59,7 +59,7 @@ void iteration_init(uint phase, uint vreg_expe) {
 		//turn_off_clocks();
 		//disable_usb();
 	}
-	if(vreg_expe < VREG_VOLTAGE_DEFAULT) {
+	if(vreg_expe != VREG_VOLTAGE_DEFAULT) {
 		vreg_disable_voltage_limit();
 		powman_clear_bits(&powman_hw->bod, 0x000001f1);
 	}
@@ -371,7 +371,7 @@ uint bench_size_by_bench_num(struct bench_sizes bench_sizes, uint bench_num, boo
 
 void print_configurations_csv(char* buffer, void* configurations, uint nb_expes, uint8_t benchmarks_to_run, struct bench_sizes bench_sizes, uint b_num, bool is_lposc, uint clock_freq) {
 	const char* benchmark_names[] = {"noop", "prime", "prime_multicores", "mat_mul", "mat_mul_float", "mat_mul_double"};
-	const char* vreg_strings[] = {"0.55V", "0.60V", "0.65V", "0.70V", "0.75V", "0.80V", "0.85V", "0.90V", "0.95V", "1.00V", "1.05V", "1.10V"};
+	const char* vreg_strings[] = {"0.55V", "0.60V", "0.65V", "0.70V", "0.75V", "0.80V", "0.85V", "0.90V", "0.95V", "1.00V", "1.05V", "1.10V", "1.15V", "1.20V", "1.25V"};
 	const char* clk_name[] = {"PLL", "XOSC", "ROSC", "LPOSC"};
 	const struct config conf = *(const struct config*) configurations;
 	for (int bench_num = 0; bench_num < NB_BENCHMARKS; bench_num++) {

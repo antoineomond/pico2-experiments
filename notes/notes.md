@@ -1,6 +1,13 @@
 # 2026-05-11
 - The VCO frequency has a low impact on energy consumption: results/experiments_run/vco_freq_impact/vco_freq_impact.pdf: less than 10% decrease in both cases (2.7% and 7.9%).
 - Visually, it looks like the 150MHz frequency allows for the best energy consumption savings: results/experiments_run/pll_range/vco_freq_impact.pdf
+- Using 1.20V and putting the PLL output frequency to 250MHz, then 240MHz, then 230MHz makes the UART output to produce garbage at 230MHz. Even when resetting the board using the bootsel, it keeps resetting itself and re-outputting garbage after few seconds.   
+    - the issue was an out of bound index error on an array. The normal behavior is the board crashes and doesn't print anything. So the behavior described above is strange   
+- Higher frequencies than 180MHz are reached either correctly, either divided by 2 (randomly). Increasing VREG output to 1.20 doesn't have a noticeable impact. 
+- It looks like the frequency counter doesn't count or output the correct values. In results/experiments_run/pll_range_upper/vco_freq_impact.pdf it is shown that the power usage value for plots such as 250MHz or 230MHz show a power usage below 150MHz. They also show a completion time that is around twice the one of 240MHz (which seems to be printed correctly). That hints toward the fact that the frequency counter may advertise a certain frequency, while this frequency is in fact twice as low.
+    - experiments showed that the PLL frequency is set once and doesn't fluctuate after having been set (20 iterations in same config with one second between each freq sampling). So it is something during the initialisation of the PLL frequency that causes the problem. There doesn't seem to be a regular pattern, except it looks like the divided frequency appears more often and each frequency appear maximum 3 times in a row. It starts from 190MHz (180MHz and below correctly output the frequency). 
+    - setting using set_sys_clock_khz seems to fix the issue
+- increasing PLL frequency from 150MHz to 200MHz doesn't seem to have a positive impact on energy consumption saving (check results/experiments_run/pll_range_upper/vco_freq_impact.pdf)
 
 # 2026-05-08
 - Doing noop expes in experiments where we measure energy consumption makes no sense. Because noop involves a wait, which doing varies according to processor frequency

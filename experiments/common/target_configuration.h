@@ -93,22 +93,35 @@ static struct config configs[] = {
 	//{PLL_SYS, 1480*MHZ, 7, 7, 0, 0, 0, 0, 0, VREG_DEFAULT, true},								 // 30.123MHz
 	//{PLL_SYS, 760*MHZ, 5, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true},								 // 30.240MHz
 	
-	// PLL range
-	{PLL_SYS, 1500*MHZ, 2, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 150MHz 
-	{PLL_SYS, 1270*MHZ, 3, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 140MHz 
-	{PLL_SYS, 1560*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 130MHz 
-	{PLL_SYS, 1450*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 120MHz 
-	{PLL_SYS, 1330*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 110MHz 
-	{PLL_SYS, 1510*MHZ, 5, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 100MHz 
-	{PLL_SYS, 1440*MHZ, 4, 4, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 90MHz 
-	{PLL_SYS, 1450*MHZ, 6, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 80MHz 
-	{PLL_SYS, 1270*MHZ, 6, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 70MHz 
-	{PLL_SYS, 1510*MHZ, 5, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 60MHz 
-	{PLL_SYS, 1510*MHZ, 6, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 50MHz 
-	{PLL_SYS, 1450*MHZ, 6, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 40MHz 
-	{PLL_SYS, 1270*MHZ, 7, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 30MHz 
-	{PLL_SYS, 850*MHZ, 7, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 20MHz 
+	// PLL range higher
+	{PLL_SYS, 1500*MHZ, 2, 5, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true}, // 150MHz 
+	{PLL_SYS, 1440*MHZ, 3, 3, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true}, // 160MHz 
+	{PLL_SYS, 1360*MHZ, 2, 4, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true}, // 170MHz 
+	{PLL_SYS, 1440*MHZ, 2, 4, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true}, // 180MHz 
+	{PLL_SYS, 1140*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true}, // 190MHz 
+	{PLL_SYS, 1200*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true}, // 200MHz 
+	{PLL_SYS, 1260*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true}, // 210MHz 
+	{PLL_SYS, 1320*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true}, // 220MHz 
+	{PLL_SYS, 1380*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true}, // 230MHz 
+	{PLL_SYS, 1440*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true}, // 240MHz 
+	{PLL_SYS, 1500*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_10, true}, // 250MHz 
 	
+	// PLL range below
+	// The maximum frequency the board can reach at 1.1V is 312MHz (https://learn.pimoroni.com/article/overclocking-the-pico-2)
+	//{PLL_SYS, 1500*MHZ, 2, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 150MHz 
+	//{PLL_SYS, 1270*MHZ, 3, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 140MHz 
+	//{PLL_SYS, 1560*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 130MHz 
+	//{PLL_SYS, 1450*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 120MHz 
+	//{PLL_SYS, 1330*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 110MHz 
+	//{PLL_SYS, 1510*MHZ, 5, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 100MHz 
+	//{PLL_SYS, 1440*MHZ, 4, 4, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 90MHz 
+	//{PLL_SYS, 1450*MHZ, 6, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 80MHz 
+	//{PLL_SYS, 1270*MHZ, 6, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 70MHz 
+	//{PLL_SYS, 1510*MHZ, 5, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 60MHz 
+	//{PLL_SYS, 1510*MHZ, 6, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 50MHz 
+	//{PLL_SYS, 1450*MHZ, 6, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 40MHz 
+	//{PLL_SYS, 1270*MHZ, 7, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 30MHz 
+	//{PLL_SYS, 850*MHZ, 7, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 20MHz 
 
 	// 200MHz PLL
 	//{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, PLL_DEFAULT_POSTDIV1, PLL_DEFAULT_POSTDIV2, 0, 0, 0, 0, 0, VREG_DEFAULT, true},
@@ -258,8 +271,8 @@ static inline uint set_clock_source_xosc() {
 }
 
 static inline uint set_clock_source_pll(uint vco_freq, uint div1, uint div2) {
-	set_clock_source_xosc();
-	pll_init(pll_sys, PLL_SYS_REFDIV, vco_freq, div1, div2);
+	set_sys_clock_khz(vco_freq/1000/div1/div2, true);
+	sleep_ms(1000);
 	
 	uint clk_src_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY) * KHZ;
 	
@@ -275,7 +288,7 @@ static inline uint set_clock_source_pll(uint vco_freq, uint div1, uint div2) {
 static inline uint switch_configuration_from_parameter(const struct config* config) {
 	// Set the voltage, clock source and frequency (measure the frequency for rosc and lposc)
 	// pll must be deactivated to reach vreg outputs below 0.9V
-	set_clock_source_xosc();
+	//set_clock_source_xosc();
 	sleep_ms(100);
 	vreg_disable_voltage_limit();
 	powman_clear_bits(&powman_hw->bod, 0x000001f1);
