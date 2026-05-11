@@ -5,7 +5,10 @@ library(rlang)
 library(patchwork)
 library(stringr)
 options(dplyr.print_max = 1e9, pillar.width = Inf)
-baseline_mapfunc <- function(lvls) { return(gsub("(C|V|L)\\.", "\\1 | ", lvls)) }
+baseline_mapfunc <- function(lvls) { return(gsub("(C|V|L|z)\\.", "\\1 | ", lvls)) }
+no_filter_f <- function(df_input) {
+	return(list(df_input, c(""), "vco_freq_impact", baseline_mapfunc))
+}
 baseline_f <- function(df_input) {
 	df_input <- df_input %>%
 		filter(clock_source %in% c("PLL", "XOSC", "ROSC")) %>%
@@ -58,7 +61,7 @@ lposc_min_f <- function(df_input) {
 MHz <- 1000000
 kHz <- 1000
 #folder = ""
-folder = "debug/energy_per_benchmark/bench_per_size_3/"
+folder = "pll_range/"
 last_benchmark <- "mat_mul_double"
 name <- paste(folder, "results", sep="")
 df <- read.csv(paste(name, ".csv", sep=""))
@@ -73,7 +76,7 @@ df <- df %>%
 	select(-config_row)
 
 #for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc_min_f)) {
-for(expe in c(baseline_f)) {
+for(expe in c(no_filter_f)) {
 	res <- expe(df)
 	df_expe <- res[[1]]
 	level_names <- res[[2]]
@@ -85,16 +88,19 @@ for(expe in c(baseline_f)) {
 		
 		# power
 		power_summary <- df_expe_num %>%
+			#group_by(clock_source, pll_vco_freq, clock_freq) %>%
 			group_by(clock_source, vreg_output, clock_freq) %>%
 			summarise(power_median = median(power_sample, na.rm = TRUE))
 		unit <- if (max(df_expe_num$clock_freq, na.rm = TRUE) < MHz) "kHz" else "MHz"
 		div <- if (max(df_expe_num$clock_freq, na.rm = TRUE) < MHz) kHz else MHz
+		#df_expe_num$gp <- interaction(df_expe_num$clock_source, paste(round(df_expe_num$pll_vco_freq/div, 1), "MHz", sep=""), paste(round(df_expe_num$clock_freq/div, 1), unit, sep=""))
 		df_expe_num$gp <- interaction(df_expe_num$clock_source, df_expe_num$vreg_output, paste(round(df_expe_num$clock_freq/div, 1), unit, sep=""))
 		
 		lvls <- levels(df_expe_num$gp)
 		res_mapping <- setNames(mapfunc(lvls), lvls)
 		df_expe_num$clock_source <- factor(df_expe_num$clock_source, levels = c("PLL", "XOSC", "ROSC", "LPOSC"))
 		df_expe_num$vreg_output <- factor(df_expe_num$vreg_output, levels = c("1.10V", "1.00V", "0.90V", "0.80V"))
+		#df_expe_num$gp <- factor(df_expe_num$gp, levels = unique(df_expe_num$gp[order(df_expe_num$clock_source, df_expe_num$pll_vco_freq, -df_expe_num$clock_freq)]))
 		df_expe_num$gp <- factor(df_expe_num$gp, levels = unique(df_expe_num$gp[order(df_expe_num$clock_source, df_expe_num$vreg_output, -df_expe_num$clock_freq)]))
 		
 		mtimestamp <- max(df_expe_num$current_timestamp, na.rm = TRUE)

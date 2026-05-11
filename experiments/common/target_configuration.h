@@ -86,12 +86,39 @@ static struct config configs[] = {
 	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_0_80, true}, // 3.49 mW
 	
 	/* Paper experiments */
-	// Baseline
-	{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, PLL_DEFAULT_POSTDIV1, PLL_DEFAULT_POSTDIV2, 0, 0, 0, 0, 0, VREG_DEFAULT, true},															 // 73.99 mW
-	{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_DEFAULT, true},																																															 // 14.85 mW
-	//{ROSC, 0, 0, 0, ROSC_DEFAULT_DIVIDER, ROSC_DEFAULT_RANGE, ROSC_DEFAULT_DRIVE_STRENGTH, ROSC_DEFAULT_DRIVE_STRENGTH, 0, VREG_DEFAULT, true},			 // 13.14 mW
+	// VCO freqs
+	//{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, 2, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 150MHz 
+	//{PLL_SYS, 900*MHZ, 2, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true},								 // 150MHz
+	//
+	//{PLL_SYS, 1480*MHZ, 7, 7, 0, 0, 0, 0, 0, VREG_DEFAULT, true},								 // 30.123MHz
+	//{PLL_SYS, 760*MHZ, 5, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true},								 // 30.240MHz
 	
-	// pll Min frequency, default voltage
+	// PLL range
+	{PLL_SYS, 1500*MHZ, 2, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 150MHz 
+	{PLL_SYS, 1270*MHZ, 3, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 140MHz 
+	{PLL_SYS, 1560*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 130MHz 
+	{PLL_SYS, 1450*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 120MHz 
+	{PLL_SYS, 1330*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 110MHz 
+	{PLL_SYS, 1510*MHZ, 5, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 100MHz 
+	{PLL_SYS, 1440*MHZ, 4, 4, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 90MHz 
+	{PLL_SYS, 1450*MHZ, 6, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 80MHz 
+	{PLL_SYS, 1270*MHZ, 6, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 70MHz 
+	{PLL_SYS, 1510*MHZ, 5, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 60MHz 
+	{PLL_SYS, 1510*MHZ, 6, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 50MHz 
+	{PLL_SYS, 1450*MHZ, 6, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 40MHz 
+	{PLL_SYS, 1270*MHZ, 7, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 30MHz 
+	{PLL_SYS, 850*MHZ, 7, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 20MHz 
+	
+
+	// 200MHz PLL
+	//{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, PLL_DEFAULT_POSTDIV1, PLL_DEFAULT_POSTDIV2, 0, 0, 0, 0, 0, VREG_DEFAULT, true},
+	
+	// Baseline
+	//{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, PLL_DEFAULT_POSTDIV1, PLL_DEFAULT_POSTDIV2, 0, 0, 0, 0, 0, VREG_DEFAULT, true},															 // 73.99 mW
+	//{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_DEFAULT, true},																																															 // 14.85 mW
+	//{ROSC, 0, 0, 0, ROSC_DEFAULT_DIVIDER, ROSC_DEFAULT_RANGE, ROSC_DEFAULT_DRIVE_STRENGTH, ROSC_DEFAULT_DRIVE_STRENGTH, 0, VREG_DEFAULT, true},			 // 13.14 mW
+	//
+	//// pll Min frequency, default voltage
 	//{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_DEFAULT, true},																						 // 18.10 mW
 	//// pll Default frequency, min voltage
 	//{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, PLL_DEFAULT_POSTDIV1, PLL_DEFAULT_POSTDIV2, 0, 0, 0, 0, 0, VREG_MIN_PLL, true},															 // 54.18 mW

@@ -2,17 +2,35 @@ library("ggplot2")
 library("dplyr")
 library(rlang)
 
-freq <- 30000
-tol <- 0.01
-df <- read.csv("rosc_freqs.csv")
-df <- df[order(df$clock_freq), ]
-df <- df[df$clock_freq > freq-freq*tol & df$clock_freq < freq+freq*tol & df$range != "fa6", ]
-#df <- df[df$clock_freq > freq-freq*tol & df$clock_freq < freq+freq*tol, ]
+MHz <- 1000000
 
-df[df$vreg == 5, ]
-#df[df$vreg == max(df$vreg),]
+print_freq <- function() {
+	freq <- 30000
+	tol <- 0.01
+	#df <- read.csv("rosc_freqs.csv")
+	df <- read.csv("pll_freqs.csv")
+	df <- df[order(df$clock_freq), ]
+	#df <- df[df$clock_freq > freq-freq*tol & df$clock_freq < freq+freq*tol & df$range != "fa6", ]
+	df <- df[df$clock_freq > freq-freq*tol & df$clock_freq < freq+freq*tol, ]
 
-#df[df$vco_freq < 960,]
-#df[df$vco_freq == max(df$vco_freq),]
+	#df[df$vreg == 5, ]
+	#df[df$vreg == max(df$vreg),]
 
-#df[df$clock_freq == min(df$clock_freq),]
+	#df[df$vco_freq < 960,]
+	df[df$vco_freq == max(df$vco_freq),]
+	df[df$vco_freq == min(df$vco_freq),]
+
+	#df[df$clock_freq == min(df$clock_freq),]
+} 
+
+show_freq_range <- function() {
+	df <- read.csv("pll_freqs.csv")
+	df <- df[order(df$clock_freq), ]
+	for(target_freq in c(200, 150, 140, 130, 120, 110, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10)) {
+		print(df[df$clock_freq == target_freq*1000, ])
+	}
+
+	#df[df$clock_freq == min(df$clock_freq),]
+} 
+
+show_freq_range()
