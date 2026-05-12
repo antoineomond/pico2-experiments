@@ -1,7 +1,7 @@
 library("ggplot2")
 library("dplyr")
 library(rlang)
-
+options(dplyr.print_max = 1e9, width = 200)
 MHz <- 1000000
 
 print_freq <- function() {
@@ -33,4 +33,24 @@ show_freq_range <- function() {
 	#df[df$clock_freq == min(df$clock_freq),]
 } 
 
-show_freq_range()
+show_freq_range_rosc <- function() {
+	df <- read.csv("085V_rosc_freq_all.csv")
+	df <- df[order(df$clock_freq), ]
+	tol <- 0.005
+	df <- df %>%
+		group_by(clock_source,vreg,divider,range,freqa,freqb) %>%
+		mutate(
+			mean_clk = mean(clock_freq, na.rm = TRUE),
+			sd_clk = sd(clock_freq, na.rm = TRUE),
+			n = n()
+
+		)
+	for(target_freq in c(150, 140, 130, 120, 110, 100, 90, 80, 70, 60, 50, 40, 30, 20)) {
+		freq <- target_freq*1000
+		print(df[df$iteration == 0 & df$clock_freq > freq-freq*tol & df$clock_freq < freq+freq*tol & df$vreg == 6, ])
+	}
+
+	#df[df$clock_freq == min(df$clock_freq),]
+} 
+
+show_freq_range_rosc()

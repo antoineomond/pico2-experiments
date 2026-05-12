@@ -8,7 +8,7 @@
 #define BENCHMARKS_TO_RUN 0b111110
 #define PRINT_CONFS_CSV 0
 struct bench_sizes bench_sizes[] = {
-	{.noop = 10, .prime = 20000, .prime_lposc = 200, .mat_mul_iters = 30, .mat_mul_iters_lposc = 1},
+	{.noop = 10, .prime = 5000, .prime_lposc = 200, .mat_mul_iters = 10, .mat_mul_iters_lposc = 1},
 	//{.noop = 20, .prime = 5000, .prime_lposc = 200, .mat_mul_iters = 10, .mat_mul_iters_lposc = 1},
 	//{.noop = 10, .prime = 10000, .prime_lposc = 200, .mat_mul_iters = 10, .mat_mul_iters_lposc = 1},
 	//{.noop = 10, .prime = 5000, .prime_lposc = 200, .mat_mul_iters = 100, .mat_mul_iters_lposc = 1},

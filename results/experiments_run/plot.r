@@ -61,7 +61,7 @@ lposc_min_f <- function(df_input) {
 MHz <- 1000000
 kHz <- 1000
 #folder = ""
-folder = "pll_range_upper/"
+folder = "085V_rosc_range_below/"
 last_benchmark <- "mat_mul_double"
 name <- paste(folder, "results", sep="")
 df <- read.csv(paste(name, ".csv", sep=""))

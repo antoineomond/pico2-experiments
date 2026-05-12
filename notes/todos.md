@@ -4,9 +4,16 @@
     - [x] plot the result according to benchmark size as a facet wrap and see the difference in terms of energy consumption
 - [x] find/re-do ROSC csv mapping up to 300MHz
 - [x] do PLL csv frequency mapping up to 300MHz
-- [ ] understand difference between the setting PLL frequency using the current code, or using the set_sys_clock_khz function 
-- [ ] design experiments for experimenting ROSC inaccuracy 
+- [x] analyse difference ROSC freq count and ROSC freq expes 
+- [x] plots ROSC 20 to 150MHz at 1.1V
+- [x] plots ROSC 20 to 150MHz at 0.85V
+    - [x] 20 to 110MHz
+    - [ ] 120 to 150MHz with larger V
+- [ ] plots ROSC 150 to 250MHz with lowest V possible
+- [ ] design experiments for inaccuracy of the ROSC
 - [ ] remove noop operation on manuscript, redo figures without the noop operations 
+
+- [ ] understand difference between the setting PLL frequency using the current code, or using the set_sys_clock_khz function 
 - [ ] plot the result for one clock according to type of benchmark and see how the median power consumption changes 
 - [ ] add in the expe setup that the pico2 has test points in the back of the board
-
+- [ ] design experiments for experimenting ROSC inaccuracy 
