@@ -94,11 +94,12 @@ int main() {
 	//	VREG_VOLTAGE_1_10, VREG_VOLTAGE_1_05, VREG_VOLTAGE_1_00, VREG_VOLTAGE_0_95,
 	//	VREG_VOLTAGE_0_90
 	//};
+	stdio_init_all();
+	sleep_ms(1000);
+	printf("iteration,clock_source,vreg,divider,range,freqa,freqb,clock_freq\n");
+	stdio_deinit_all();
 	
-	const uint vregs[] = {VREG_VOLTAGE_0_85};
 	turn_off_plls();
-	//stdio_init_all();
-	//sleep_ms(1000);
 	//#endif
 	
 	vreg_disable_voltage_limit();
@@ -116,9 +117,9 @@ int main() {
 	//while(true){
 	//	sleep_ms(1000);
 	//}
-	//printf("iteration,clock_source,vreg,divider,range,freqa,freqb,clock_freq\n");
-	const uint nb_iterations = 20;
-	const uint max_divider = 6;
+	const uint nb_iterations = 10;
+	const uint vregs[] = {VREG_VOLTAGE_0_85, VREG_VOLTAGE_0_90, VREG_VOLTAGE_0_95, VREG_VOLTAGE_1_00, VREG_VOLTAGE_1_05, VREG_VOLTAGE_1_10, VREG_VOLTAGE_1_15, VREG_VOLTAGE_1_20, VREG_VOLTAGE_1_25};
+	const uint max_divider = 2;
 	const uint ranges[] = {ROSC_CTRL_FREQ_RANGE_VALUE_LOW, ROSC_CTRL_FREQ_RANGE_VALUE_MEDIUM, ROSC_CTRL_FREQ_RANGE_VALUE_HIGH};
 	const uint codes[16] = {
 		0x00000001, 0x00000003, 0x00000005, 0x00000007,

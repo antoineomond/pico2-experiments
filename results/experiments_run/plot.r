@@ -7,7 +7,7 @@ library(stringr)
 options(dplyr.print_max = 1e9, pillar.width = Inf)
 baseline_mapfunc <- function(lvls) { return(gsub("(C|V|L|z)\\.", "\\1 | ", lvls)) }
 no_filter_f <- function(df_input) {
-	return(list(df_input, c(""), "vco_freq_impact", baseline_mapfunc))
+	return(list(df_input, c(""), "result", baseline_mapfunc))
 }
 baseline_f <- function(df_input) {
 	df_input <- df_input %>%
@@ -60,8 +60,8 @@ lposc_min_f <- function(df_input) {
 }
 MHz <- 1000000
 kHz <- 1000
-#folder = ""
-folder = "085V_rosc_range_below/"
+args <- commandArgs(trailingOnly = TRUE)
+folder <- args[1] 
 last_benchmark <- "mat_mul_double"
 name <- paste(folder, "results", sep="")
 df <- read.csv(paste(name, ".csv", sep=""))
@@ -99,7 +99,7 @@ for(expe in c(no_filter_f)) {
 		lvls <- levels(df_expe_num$gp)
 		res_mapping <- setNames(mapfunc(lvls), lvls)
 		df_expe_num$clock_source <- factor(df_expe_num$clock_source, levels = c("PLL", "XOSC", "ROSC", "LPOSC"))
-		df_expe_num$vreg_output <- factor(df_expe_num$vreg_output, levels = c("1.10V", "1.00V", "0.90V", "0.80V"))
+		df_expe_num$vreg_output <- factor(df_expe_num$vreg_output, levels = c("1.25V", "1.20V", "1.15V", "1.10V", "1.05V", "1.00V", "0.95V", "0.90V", "0.85V", "0.80V"))
 		#df_expe_num$gp <- factor(df_expe_num$gp, levels = unique(df_expe_num$gp[order(df_expe_num$clock_source, df_expe_num$pll_vco_freq, -df_expe_num$clock_freq)]))
 		df_expe_num$gp <- factor(df_expe_num$gp, levels = unique(df_expe_num$gp[order(df_expe_num$clock_source, df_expe_num$vreg_output, -df_expe_num$clock_freq)]))
 		
@@ -122,7 +122,7 @@ for(expe in c(no_filter_f)) {
 			ungroup() %>%
 			# compute avg_energy and energy_sample
 			group_by(expe_num) %>%
-			summarise(gp = gp, avg_energy = mean(energy_sample), std_energy = sd(energy_sample), .groups = "drop") %>%
+			summarise(clock_source = clock_source, vreg_output = vreg_output, clock_freq = clock_freq, gp = gp, avg_energy = mean(energy_sample), std_energy = sd(energy_sample), avg_time = mean(current_timestamp), std_time = sd(current_timestamp), .groups = "drop") %>%
 			distinct()
 		p2 <- ggplot(energy_consumption, aes(x = gp, y = avg_energy, fill=gp)) +
 			geom_bar(stat = "identity", width = 0.2) +
@@ -138,6 +138,9 @@ for(expe in c(no_filter_f)) {
 		plot_layout(guides = "collect") & 
 		theme(legend.position = "top")
 
+		power_summary$gp <- interaction(power_summary$clock_source, power_summary$vreg_output, paste(round(power_summary$clock_freq/div, 1), unit, sep=""))
+		write.csv(power_summary, paste(folder, "power_summary.csv", sep=""))
+		write.csv(energy_consumption, paste(folder, "energy_consumption.csv", sep=""))
 		ggsave(paste(folder, pdf_name, ".pdf", sep=""), plot=combined_plot)
 	}
 }

@@ -13,6 +13,7 @@
 - [ ] design experiments for inaccuracy of the ROSC
 - [ ] remove noop operation on manuscript, redo figures without the noop operations 
 
+- [ ] quantify the variability of the ROSC frequency according to the board (need at least 5 boards)
 - [ ] understand difference between the setting PLL frequency using the current code, or using the set_sys_clock_khz function 
 - [ ] plot the result for one clock according to type of benchmark and see how the median power consumption changes 
 - [ ] add in the expe setup that the pico2 has test points in the back of the board
