@@ -37,3 +37,4 @@ main.pdf
 # csvs and pdfs ignored by default
 *.csv
 *.pdf
+*.csv.bak

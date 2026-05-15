@@ -7,7 +7,7 @@ import pigpio
 from datetime import datetime
 from statistics import StatisticsError, mean, stdev, median
 
-NB_BENCHMARKS = 6
+NB_BENCHMARKS = 5
 DEADLINE_ITERATION = 3600
 EXPE_PIN = 27
 expe_num = 0
@@ -15,6 +15,7 @@ done = 0
 started = 0
 init = 0 # Necessary when expe_pin is initially at 1 and reset to 0
 s = 0
+end_of_expe = False
 deadline = time.time()
 start_time = time.time()
 timing_samples = []
@@ -28,6 +29,10 @@ offset = int(sys.argv[3]) # If there was other expes done before, just offset to
 live = int(sys.argv[4])
 
 def next_expe(user_gpio, level, tick):
+    global end_of_expe
+    if(end_of_expe):
+        return
+    
     global init
     global expe_num
     global started
@@ -111,12 +116,12 @@ while not done and (time.time() - deadline) < DEADLINE_ITERATION:
 print("Sampling ends")
 result_file = "results.csv"
 with open(result_file, "w") as f:
-    f.write("iteration_num,expe_num,current_sample,power_sample,energy_sample,shunt_voltage_sample,bus_voltage_sample,current_timestamp,timing_sample\n")
+    f.write("iteration_num,conf_num,expe_num,current_sample,power_sample,energy_sample,shunt_voltage_sample,bus_voltage_sample,current_timestamp,timing_sample\n")
     for expe_num, samples in enumerate(current_samples):
         for current_sample in samples:
             current, power, energy, shunt_voltage, bus_voltage, timestamp = current_sample
-            f.write(f"{expe_num//nb_expes},{expe_num%nb_expes+offset},{current},{power},{energy},{shunt_voltage},{bus_voltage},{timestamp},\n")
+            f.write(f"{expe_num//nb_expes},{(expe_num%nb_expes)//NB_BENCHMARKS},{expe_num%nb_expes+offset},{current},{power},{energy},{shunt_voltage},{bus_voltage},{timestamp},\n")
     for expe_num, timing_sample in enumerate(timing_samples):
-        f.write(f"{expe_num//nb_expes},{expe_num%nb_expes+offset},,,,,,,{timing_sample}\n")
+        f.write(f"{expe_num//nb_expes},{(expe_num%nb_expes)//NB_BENCHMARKS},{expe_num%nb_expes+offset},,,,,,,{timing_sample}\n")
 
 print(f"Done at {datetime.now()} in {datetime.now() - start_date}s")

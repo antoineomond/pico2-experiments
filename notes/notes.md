@@ -16,6 +16,10 @@ Results for 1.1V showed that using the ROSC is counter productive and consumes i
 
 When reducing the VREG output to the lowest possible for each frequency (with a 3% tolerance in frequency accuracy), ROSC results offer a better energy consumption overall (compare results/experiments_run/pll_range/vco_freq_impact.pdf with results/experiments_run/rosc_range_low_vreg/vco_freq_impact.pdf. This is especially the case for frequencies from 150MHz to 20Mhz.For these frequencies, the using the ROSC allows for a better energy consumption savings compared to using the PLL. Energy consumption savings range from 2 to 34%, corresponding to frequencies from 220MHz to 30MHz. The energy consumption saving at 150MHz is 12%: results/experiments_run/11V_PLL_lowvreg_ROSC.csv. These are the results when setting the VREG output at 1.1V when using the PLL.  
 
+When reducing the VREG output to the lowest attainable while using the PLL, results for the ROSC become much less interesting. Above 110MHz, using the ROSC instead of the PLL increases the energy consumption and power usage. The increase is between 10% (120MHz) to 29% (220MHz). At 110MHz and below, using the ROSC decreases the energy consumption. The energy consumption savings range between 8 (110MHz) to 19% (30MHz).
+
+One surprising result is that at 20MHz, the ROSC uses more power compared to 30MHz (from 15 to 20mW). This is not the case when using the PLL. This leads to a large increase in energy consumption when using the ROSC instead of the PLL for 20MHz (36% increase). 
+
 # rosc freq counting
 At first, the ROSC frequencies got from the execution of benchmark and the ones obtained by the freq count script were different. The issue was because, in the expe code, the PLL was used instead of the XOSC to count the frequencies, with a voltage at 0.85V. Normally, executing computing benchmarks using the PLL for this voltage results in a crash. But to count the frequency it was working. However, the results were always slightly lower than the expected frequency. It is possible that the PLL was working in a degraded way, where it may have missed lots of signal edges when counting the frequency. 
 
