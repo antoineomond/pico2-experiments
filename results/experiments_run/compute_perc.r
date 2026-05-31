@@ -1,10 +1,12 @@
 library("dplyr")
 library(gridExtra)
 options(dplyr.print_max = 1e9, pillar.width = Inf, width = 200)
-df1_energy <- read.csv("pll_range_low_vreg/energy_consumption.csv")
-df2_energy <- read.csv("rosc_range_low_vreg/energy_consumption.csv")
-df1_power <- read.csv("pll_range_low_vreg/power_summary.csv")
-df2_power <- read.csv("rosc_range_low_vreg/power_summary.csv")
+first <- "pll_range/"
+second <- "rosc_range_low_vreg/"
+df1_energy <- read.csv(paste(first, "energy_consumption.csv", sep=""))
+df2_energy <- read.csv(paste(second, "energy_consumption.csv", sep=""))
+df1_power <- read.csv(paste(first, "power_summary.csv", sep=""))
+df2_power <- read.csv(paste(second, "power_summary.csv", sep=""))
 df <- data.frame(
 	gp1 = df1_energy$gp,
 	gp2 = df2_energy$gp,
@@ -17,10 +19,25 @@ df <- data.frame(
 	time1 = df1_energy$avg_time,
 	time2 = df2_energy$avg_time,
 	time_diff = ((df2_energy$avg_time - df1_energy$avg_time) / df1_energy$avg_time) * 100
-	
+)
+fill_matrix <- matrix("white", nrow = nrow(df), ncol = ncol(df))
+
+fill_matrix[, which(names(df) == "energy_gain")] <-
+  ifelse(df$energy_gain > 0, "#ffcccc",
+         ifelse(df$energy_gain < 0, "#ccffcc", "white"))
+
+fill_matrix[, which(names(df) == "power_gain")] <-
+  ifelse(df$power_gain > 0, "#ffcccc",
+         ifelse(df$power_gain < 0, "#ccffcc", "white"))
+
+tt <- ttheme_default(
+  core = list(
+    bg_params = list(fill = fill_matrix)
+  )
 )
 
 print(df)
-write.csv(df, "lowvreg_PLL_lowvreg_ROSC.csv")
-pdf("lowvreg_PLL_lowvreg_ROSC.pdf", height = 10, width = 20)
-grid.table(df)
+filename <- "11V_PLL_11V_ROSC_colors"
+write.csv(df, paste(filename, ".csv", sep=""))
+pdf(paste(filename, ".pdf", sep=""), height = 10, width = 20)
+grid.table(df, theme = tt)

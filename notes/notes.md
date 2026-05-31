@@ -1,3 +1,8 @@
+# meeting 2026-05-26
+- [x] comparison benchs wo noop bench noop (figures paper with figures in wo_noop/)
+- [x] comparison same frequencies PLL and ROSC for different VREGS outputs: 11V_PLL_lowvreg_ROSC_bis.pdf and lowvreg_PLL_lowvreg_ROSC.pdf
+- [x] target pour le papier
+
 # comparison PLL with ROSC at same frequency
 ## setting PLL frequencies from 20 to 250MHz
 Setting PLL to a specific frequency can be done using the set_sys_clock_khz provided by the pico-sdk. Before that, I manually deinit then reinit the PLL with a different frequency. This was a more complex process, because the system clock had to be switched from the PLL to the XOSC before turning off the PLL. Additionally, this caused issues with the frequency when frequencies higher then 180MHz had to be reached (see #2026-05-11).

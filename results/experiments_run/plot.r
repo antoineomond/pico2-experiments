@@ -4,6 +4,8 @@ library("dplyr")
 library(rlang)
 library(patchwork)
 library(stringr)
+library(tidyr)
+library(gridExtra)
 options(dplyr.print_max = 1e9, pillar.width = Inf)
 baseline_mapfunc <- function(lvls) { return(gsub("(C|V|L|z)\\.", "\\1 | ", lvls)) }
 no_filter_f <- function(df_input) {
@@ -132,6 +134,66 @@ for(expe in c(no_filter_f)) {
 		scale_x_discrete(labels = res_mapping) +
 		scale_fill_discrete(labels = res_mapping) +
 		theme(aspect.ratio = 1.75/1, legend.position = "none", axis.text.x = element_text(angle = 45, size = 8, hjust = 1))
+	
+	# energy per benchmark table
+	energy_consumption_table <- df_expe %>%
+		filter(!is.na(energy_sample)) %>%
+		group_by(iteration_num, expe_num) %>%
+		slice_tail(n = 1) %>%   # last value per iteration/expe_num
+		ungroup() %>%
+		group_by(expe_num) %>%
+		summarise(gp = gp, benchmark_name = benchmark_name, avg_energy = mean(energy_sample), std_energy = sd(energy_sample), avg_time = mean(current_timestamp), std_time = sd(current_timestamp), .groups = "drop") %>%
+		distinct()
+	
+	energy_consumption_table <- energy_consumption_table %>%
+		pivot_wider(
+			id_cols = gp,
+			names_from = benchmark_name,
+			values_from = avg_energy,
+			names_prefix = "energy_"
+		) %>%
+		summarise(
+			row_num = row_number(),
+			gp = baseline_mapfunc(gp),
+			energy_prime_rel = round(energy_prime, 2), 
+			energy_prime_multicores_rel = round(energy_prime_multicores - energy_prime, 2), 
+			energy_mat_mul_rel = round(energy_mat_mul - energy_prime_multicores, 2),
+			energy_mat_mul_float_rel = round(energy_mat_mul_float - energy_mat_mul, 2), 
+			energy_mat_mul_double_rel = round(energy_mat_mul_double - energy_mat_mul_float, 2), 
+			total_energy = energy_mat_mul_double
+		)
+		
+	energy_consumption_table <- energy_consumption_table %>%
+		mutate(
+			gain_baseline = ((total_energy - energy_consumption_table[energy_consumption_table$gp == "PLL | 1.10V | 150MHz", ]$total_energy) / energy_consumption_table[energy_consumption_table$gp == "PLL | 1.10V | 150MHz", ]$total_energy) * 100
+		)
+	
+	energy_consumption_table <- energy_consumption_table %>%
+		rename(
+			"Configuration" = gp,
+			"Prime (J)" = energy_prime_rel,
+			"Prime multicores (J)" = energy_prime_multicores_rel,
+			"Mat mul int (J)" = energy_mat_mul_rel,
+			"Mat mul float (J)" = energy_mat_mul_float_rel,
+			"Mat mul double (J)" = energy_mat_mul_double_rel,
+			"Total energy (J)" = total_energy,
+			"% baseline (%)" = gain_baseline
+		)
+
+	# Color table
+	fill_matrix <- matrix(
+		ifelse(energy_consumption_table$Configuration != "PLL | 1.10V | 150MHz", ifelse(energy_consumption_table$row_num %% 2 == 0, "grey90", "grey95"), "grey75"),
+		nrow = nrow(energy_consumption_table),
+		ncol = ncol(energy_consumption_table)
+	)
+	fill_matrix[, which(names(energy_consumption_table) == "% baseline (%)")-1] <-  # -1 because we are removing row_num column later, shifting the colors of matrix to the left 
+		ifelse(energy_consumption_table$`% baseline (%)` > 0, "#ffcccc",
+					 ifelse(energy_consumption_table$`% baseline (%)` < 0, "#ccffcc", fill_matrix))
+	tt <- ttheme_default(core = list(bg_params = list(fill = fill_matrix)))
+		
+	energy_consumption_table <- energy_consumption_table %>% select(-row_num) 
+	pdf(paste(folder, pdf_name, "_table.pdf", sep=""), height = 30, width = 20)
+	grid.table(energy_consumption_table, rows = NULL, theme = tt)
 
 	p2 <- p2 + guides(color = "none", fill = "none", linetype = "none")
 	combined_plot <- (p1 + p2) + 
