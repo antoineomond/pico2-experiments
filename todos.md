@@ -10,7 +10,8 @@
     - [x] 20 to 110MHz
     - [x] 120 to 150MHz with larger V
 - [x] plots ROSC 150 to 250MHz with lowest V possible
-- [ ] have a table instead of a plot for the energy consumption. The table prints results according to the benchmark
+- [x] have a table instead of a plot for the energy consumption. The table prints results according to the benchmark
+- [ ] re-write some of the expe setup and result section with the new results
 - understand why ROSC is advertised as low power
     - [ ] have results when disabling plls and xosc
     - [ ] expe comparing results XOSC and ROSC
