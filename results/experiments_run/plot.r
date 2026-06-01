@@ -16,49 +16,49 @@ baseline_f <- function(df_input) {
 		filter(clock_source %in% c("PLL", "XOSC", "ROSC")) %>%
 		filter(vreg_output %in% c("1.10V")) %>%
 		filter(clock_freq %/% 1000000 %in% c(150, 12, 11))
-	return(list(df_input, c("PLL", "XOSC", "ROSC"), "baseline", baseline_mapfunc))
+	return(list(df_input, c("PLL", "XOSC", "ROSC"), "baseline", baseline_mapfunc, "PLL | 1.10V | 150MHz"))
 }
 pll_f <- function(df_input) {
 	df_input <- df_input %>%
 		filter(clock_source %in% c("PLL")) %>%
 		filter(vreg_output %in% c("1.10V", "0.90V")) %>%
 		filter(clock_freq %/% 1000000 %in% c(150, 15))
-	return(list(df_input, c("PLL (baseline)", "PLL (lowest f)", "PLL (lowest v)", "PLL (lowest f v)"), "minimums-pll", baseline_mapfunc))
+	return(list(df_input, c("PLL (baseline)", "PLL (lowest f)", "PLL (lowest v)", "PLL (lowest f v)"), "minimums-pll", baseline_mapfunc, "PLL | 1.10V | 150MHz"))
 }
 rosc_f <- function(df_input) {
 	df_input <- df_input %>%
 		filter(clock_source %in% c("ROSC")) %>%
 		filter(vreg_output %in% c("1.10V", "0.80V")) %>%
 		filter(clock_freq %/%1000000 %in% c(11, 2, 3, 1))
-	return(list(df_input, c("ROSC (baseline)", "ROSC (lowest f)", "ROSC (lowest v)", "ROSC (lowest f v)"), "minimums-rosc", baseline_mapfunc))
+	return(list(df_input, c("ROSC (baseline)", "ROSC (lowest f)", "ROSC (lowest v)", "ROSC (lowest f v)"), "minimums-rosc", baseline_mapfunc, "ROSC | 1.10V | 11MHz"))
 }
 xosc_f <- function(df_input) {
 	df_input <- df_input %>%
 		filter(clock_source %in% c("XOSC")) %>%
 		filter(vreg_output %in% c("1.10V", "1.00V", "0.90V", "0.80V")) %>%
 		filter(clock_freq %/%1000000 %in% c(12))
-	return(list(df_input, c("XOSC (baseline)", "XOSC (1.00V)", "XOSC (0.90V)", "ROSC (0.80V) (lowest v)"), "minimums-xosc", baseline_mapfunc))
+	return(list(df_input, c("XOSC (baseline)", "XOSC (1.00V)", "XOSC (0.90V)", "ROSC (0.80V) (lowest v)"), "minimums-xosc", baseline_mapfunc, "XOSC | 1.10V | 12MHz"))
 }
 lposc_dft_f <- function(df_input) {
 	df_input <- df_input %>%
 		filter(clock_source %in% c("LPOSC")) %>%
 		filter(vreg_output %in% c("1.10V", "1.00V", "0.90V", "0.80V")) %>%
 		filter(lposc_trim %in% c(0x020))
-	return(list(df_input, c("LPOSC 1.10V (baseline)", "LPOSC (1.00V)", "LPOSC (0.90V)", "LPOSC (0.80V) (lowest v)"), "minimums-lposc_default", baseline_mapfunc))
+	return(list(df_input, c("LPOSC 1.10V (baseline)", "LPOSC (1.00V)", "LPOSC (0.90V)", "LPOSC (0.80V) (lowest v)"), "minimums-lposc_default", baseline_mapfunc, "LPOSC | 1.10V | 29kHz"))
 }
 lposc_max_f <- function(df_input) {
 	df_input <- df_input %>%
 		filter(clock_source %in% c("LPOSC")) %>%
 		filter(vreg_output %in% c("1.10V", "1.00V", "0.90V", "0.80V")) %>%
 		filter(lposc_trim %in% c(0x0f0))
-	return(list(df_input, c("LPOSC 1.10V (baseline)", "LPOSC (1.00V)", "LPOSC (0.90V)", "LPOSC (0.80V) (lowest v)"), "minimums-lposc_max", baseline_mapfunc))
+	return(list(df_input, c("LPOSC 1.10V (baseline)", "LPOSC (1.00V)", "LPOSC (0.90V)", "LPOSC (0.80V) (lowest v)"), "minimums-lposc_max", baseline_mapfunc, "LPOSC | 1.10V | 33kHz"))
 }
 lposc_min_f <- function(df_input) {
 	df_input <- df_input %>%
 		filter(clock_source %in% c("LPOSC")) %>%
 		filter(vreg_output %in% c("1.10V", "1.00V", "0.90V", "0.80V")) %>%
 		filter(lposc_trim %in% c(0x000))
-	return(list(df_input, c("LPOSC 1.10V (baseline)", "LPOSC (1.00V)", "LPOSC (0.90V)", "LPOSC (0.80V) (lowest v)"), "minimums-lposc_min", baseline_mapfunc))
+	return(list(df_input, c("LPOSC 1.10V (baseline)", "LPOSC (1.00V)", "LPOSC (0.90V)", "LPOSC (0.80V) (lowest v)"), "minimums-lposc_min", baseline_mapfunc, "LPOSC | 1.10V | 21kHz"))
 }
 MHz <- 1000000
 kHz <- 1000
@@ -78,23 +78,25 @@ df <- df %>%
 	) %>%
 	select(-config_row)
 
-#for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc_min_f)) {
-for(expe in c(no_filter_f)) {
+for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc_min_f)) {
+#for(expe in c(rosc_f)) {
+#for(expe in c(no_filter_f)) {
 	res <- expe(df)
 	df_expe <- res[[1]]
 	level_names <- res[[2]]
 	pdf_name <- res[[3]]
 	mapfunc <- res[[4]]
-	df_expe <- df_expe %>%
-		filter(conf_num == 0 | conf_num %% 2 != 0)
+	baseline_name <- res[[5]]
+	#df_expe <- df_expe %>%
+	#	filter(conf_num == 0 | conf_num %% 2 != 0)
 	
 	# power
 	power_summary <- df_expe %>%
 		#group_by(clock_source, pll_vco_freq, clock_freq) %>%
 		group_by(clock_source, vreg_output, clock_freq) %>%
 		summarise(power_median = median(power_sample, na.rm = TRUE))
-	unit <- if (max(df_expe$clock_freq, na.rm = TRUE) < MHz) "kHz" else "MHz"
-	div <- if (max(df_expe$clock_freq, na.rm = TRUE) < MHz) kHz else MHz
+	unit <- ifelse(df_expe$clock_freq < MHz, "kHz", "MHz")
+	div  <- ifelse(df_expe$clock_freq < MHz, kHz, MHz)
 	#df_expe$gp <- interaction(df_expe$clock_source, paste(round(df_expe$pll_vco_freq/div, 1), "MHz", sep=""), paste(round(df_expe$clock_freq/div, 1), unit, sep=""))
 	df_expe$gp <- interaction(df_expe$clock_source, df_expe$vreg_output, paste(round(df_expe$clock_freq/div, 1), unit, sep=""))
 	
@@ -158,14 +160,14 @@ for(expe in c(no_filter_f)) {
 			energy_prime_rel = round(energy_prime, 2), 
 			energy_prime_multicores_rel = round(energy_prime_multicores - energy_prime, 2), 
 			energy_mat_mul_rel = round(energy_mat_mul - energy_prime_multicores, 2),
-			energy_mat_mul_float_rel = round(energy_mat_mul_float - energy_mat_mul, 2), 
+			energy_mat_mul_float_rel = round(energy_mat_mul_float - energy_mat_mul, 2),
 			energy_mat_mul_double_rel = round(energy_mat_mul_double - energy_mat_mul_float, 2), 
 			total_energy = energy_mat_mul_double
 		)
 		
 	energy_consumption_table <- energy_consumption_table %>%
 		mutate(
-			gain_baseline = ((total_energy - energy_consumption_table[energy_consumption_table$gp == "PLL | 1.10V | 150MHz", ]$total_energy) / energy_consumption_table[energy_consumption_table$gp == "PLL | 1.10V | 150MHz", ]$total_energy) * 100
+			gain_baseline = ((total_energy - energy_consumption_table[energy_consumption_table$gp == baseline_name, ]$total_energy) / energy_consumption_table[energy_consumption_table$gp == baseline_name, ]$total_energy) * 100
 		)
 	
 	energy_consumption_table <- energy_consumption_table %>%
@@ -182,7 +184,7 @@ for(expe in c(no_filter_f)) {
 
 	# Color table
 	fill_matrix <- matrix(
-		ifelse(energy_consumption_table$Configuration != "PLL | 1.10V | 150MHz", ifelse(energy_consumption_table$row_num %% 2 == 0, "grey90", "grey95"), "grey75"),
+		ifelse(energy_consumption_table$Configuration != baseline_name, ifelse(energy_consumption_table$row_num %% 2 == 0, "grey90", "grey95"), "grey75"),
 		nrow = nrow(energy_consumption_table),
 		ncol = ncol(energy_consumption_table)
 	)
@@ -200,8 +202,8 @@ for(expe in c(no_filter_f)) {
 	plot_layout(guides = "collect") & 
 	theme(legend.position = "top")
 
-	power_summary$gp <- interaction(power_summary$clock_source, power_summary$vreg_output, paste(round(power_summary$clock_freq/div, 1), unit, sep=""))
 	write.csv(power_summary, paste(folder, "power_summary.csv", sep=""))
 	write.csv(energy_consumption, paste(folder, "energy_consumption.csv", sep=""))
 	ggsave(paste(folder, pdf_name, ".pdf", sep=""), plot=combined_plot, width = 14)
+	
 }
