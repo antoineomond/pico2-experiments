@@ -6,6 +6,7 @@ library(patchwork)
 library(stringr)
 library(tidyr)
 library(gridExtra)
+library(RColorBrewer)
 options(dplyr.print_max = 1e9, pillar.width = Inf)
 baseline_mapfunc <- function(lvls) { return(gsub("(C|V|L|z)\\.", "\\1 | ", lvls)) }
 no_filter_f <- function(df_input) {
@@ -79,7 +80,7 @@ df <- df %>%
 	select(-config_row)
 
 for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc_min_f)) {
-#for(expe in c(rosc_f)) {
+#for(expe in c(pll_f)) {
 #for(expe in c(no_filter_f)) {
 	res <- expe(df)
 	df_expe <- res[[1]]
@@ -107,6 +108,9 @@ for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc
 	#df_expe$gp <- factor(df_expe$gp, levels = unique(df_expe$gp[order(df_expe$clock_source, df_expe$pll_vco_freq, -df_expe$clock_freq)]))
 	df_expe$gp <- factor(df_expe$gp, levels = unique(df_expe$gp[order(df_expe$clock_source, df_expe$vreg_output, -df_expe$clock_freq)]))
 	
+	myColors <- c("black", "purple", "blue", "orange")
+	names(myColors) <- levels(df_expe$gp)
+	
 	mtimestamp <- max(df_expe$current_timestamp, na.rm = TRUE)
 	p1 <- ggplot(df_expe , aes(x = current_timestamp, y = power_sample, color=gp, group=gp)) + 
 		geom_line(na.rm = TRUE) +
@@ -115,8 +119,8 @@ for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc
 		scale_x_continuous(expand = expansion(mult = c(0, 0.3))) +
 		scale_y_continuous(n.breaks=15) +
 		labs(x = "Timestamp in seconds", y = "Power usage in mW") +
-		scale_color_discrete(name = "Configuration:", labels = res_mapping) +
-		guides(color = guide_legend(nrow = 2, byrow = TRUE)) 
+		scale_colour_manual(name = "Configuration:", values = myColors, labels = res_mapping) +
+		guides(color = guide_legend(nrow = 1, byrow = TRUE)) 
 
 	# energy
 	energy_consumption <- df_expe %>%
@@ -183,10 +187,16 @@ for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc
 		)
 
 	# Color table
+	#content <- ifelse(energy_consumption_table$Configuration != baseline_name, ifelse(energy_consumption_table$row_num %% 2 == 0, "grey90", "grey95"), "grey75")
+	#content <- ifelse(energy_consumption_table$row_num == 0, "grey90", "grey95")
+	colors <- c("#AAAAAA", "#EEB8FF", "#B8B8FF", "#FFDC8A")
+	content <- rep(colors, each = 9)
+	
 	fill_matrix <- matrix(
-		ifelse(energy_consumption_table$Configuration != baseline_name, ifelse(energy_consumption_table$row_num %% 2 == 0, "grey90", "grey95"), "grey75"),
+		content,
 		nrow = nrow(energy_consumption_table),
-		ncol = ncol(energy_consumption_table)
+		ncol = ncol(energy_consumption_table),
+		byrow = TRUE
 	)
 	fill_matrix[, which(names(energy_consumption_table) == "% baseline (%)")-1] <-  # -1 because we are removing row_num column later, shifting the colors of matrix to the left 
 		ifelse(energy_consumption_table$`% baseline (%)` > 0, "#ffcccc",
@@ -194,16 +204,19 @@ for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc
 	tt <- ttheme_default(core = list(bg_params = list(fill = fill_matrix)))
 		
 	energy_consumption_table <- energy_consumption_table %>% select(-row_num) 
-	pdf(paste(folder, pdf_name, "_table.pdf", sep=""), height = 30, width = 20)
-	grid.table(energy_consumption_table, rows = NULL, theme = tt)
+	table_grob <- tableGrob(energy_consumption_table, rows = NULL, theme = tt)
+	#pdf(paste(folder, pdf_name, "_table.pdf", sep=""), width = 15)
+	#grid.table(energy_consumption_table, rows = NULL, theme = tt)
 
 	p2 <- p2 + guides(color = "none", fill = "none", linetype = "none")
-	combined_plot <- (p1 + p2) + 
-	plot_layout(guides = "collect") & 
-	theme(legend.position = "top")
+	#combined_plot <- (p1 + p2) + plot_layout(guides = "collect") & theme(legend.position = "top")
+	combined_plot <- (p1 + plot_layout(guides = "collect") & theme(legend.position = "top")) / 
+		wrap_elements(table_grob) +
+		plot_layout(heights = c(4,1))
 
 	write.csv(power_summary, paste(folder, "power_summary.csv", sep=""))
 	write.csv(energy_consumption, paste(folder, "energy_consumption.csv", sep=""))
-	ggsave(paste(folder, pdf_name, ".pdf", sep=""), plot=combined_plot, width = 14)
+	
+	ggsave(paste(folder, pdf_name, ".pdf", sep=""), plot=combined_plot, width = 13, height = 8)
 	
 }
