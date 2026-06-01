@@ -5,6 +5,7 @@ library(rlang)
 library(patchwork)
 library(stringr)
 library(tidyr)
+library(grid)
 library(gridExtra)
 library(RColorBrewer)
 options(dplyr.print_max = 1e9, pillar.width = Inf)
@@ -80,7 +81,7 @@ df <- df %>%
 	select(-config_row)
 
 for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc_min_f)) {
-#for(expe in c(pll_f)) {
+#for(expe in c(baseline_f)) {
 #for(expe in c(no_filter_f)) {
 	res <- expe(df)
 	df_expe <- res[[1]]
@@ -118,9 +119,15 @@ for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc
 		geom_label_repel(data = power_summary, aes(x=mtimestamp*1.05, y = power_median, label = paste(round(power_median,2), "mW")), hjust = "left", show.legend = FALSE, inherit.aes = FALSE, direction = "y") +
 		scale_x_continuous(expand = expansion(mult = c(0, 0.3))) +
 		scale_y_continuous(n.breaks=15) +
-		labs(x = "Timestamp in seconds", y = "Power usage in mW") +
+		labs(x = "Timestamp in seconds", y = "Power usage in mW", title = "Power usage trace when executing all five benchmarks according to the configuration") +
 		scale_colour_manual(name = "Configuration:", values = myColors, labels = res_mapping) +
-		guides(color = guide_legend(nrow = 1, byrow = TRUE)) 
+		guides(color = guide_legend(nrow = 1, byrow = TRUE)) + 
+		theme(
+			aspect.ratio = 0.8,
+			plot.title = element_text(hjust = 0.5),
+			plot.subtitle = element_text(hjust = 0.5)
+		)
+	
 
 	# energy
 	energy_consumption <- df_expe %>%
@@ -136,7 +143,7 @@ for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc
 		geom_bar(stat = "identity", width = 0.2) +
 		geom_errorbar(aes(ymin = avg_energy - std_energy, ymax = avg_energy + std_energy), width = 0.2) +
 		geom_text(aes(label = round(avg_energy), y = avg_energy, nudge_y = 50)) +
-		labs(x = "Processor clock", y = "Total energy consumption in mJ", title = "") +
+		labs(x = "Processor clock", y = "Total energy consumption in mJ") +
 		scale_x_discrete(labels = res_mapping) +
 		scale_fill_discrete(labels = res_mapping) +
 		theme(aspect.ratio = 1.75/1, legend.position = "none", axis.text.x = element_text(angle = 45, size = 8, hjust = 1))
@@ -148,19 +155,22 @@ for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc
 		slice_tail(n = 1) %>%   # last value per iteration/expe_num
 		ungroup() %>%
 		group_by(expe_num) %>%
-		summarise(gp = gp, benchmark_name = benchmark_name, avg_energy = mean(energy_sample), std_energy = sd(energy_sample), avg_time = mean(current_timestamp), std_time = sd(current_timestamp), .groups = "drop") %>%
+		summarise(clock_source = clock_source, vreg_output = vreg_output, clock_freq = clock_freq, gp = baseline_mapfunc(gp), benchmark_name = benchmark_name, avg_energy = mean(energy_sample), std_energy = sd(energy_sample), avg_time = mean(current_timestamp), std_time = sd(current_timestamp), .groups = "drop") %>%
 		distinct()
 	
 	energy_consumption_table <- energy_consumption_table %>%
 		pivot_wider(
-			id_cols = gp,
+			id_cols = c(clock_source, vreg_output, clock_freq, gp),
 			names_from = benchmark_name,
 			values_from = avg_energy,
 			names_prefix = "energy_"
 		) %>%
 		summarise(
 			row_num = row_number(),
-			gp = baseline_mapfunc(gp),
+			clock_source = clock_source,
+			vreg_output = vreg_output,
+			clock_freq = paste(round(clock_freq / ifelse(clock_freq < MHz, kHz, MHz), 1), ifelse(clock_freq < MHz, "kHz", "MHz")),
+			gp = gp,
 			energy_prime_rel = round(energy_prime, 2), 
 			energy_prime_multicores_rel = round(energy_prime_multicores - energy_prime, 2), 
 			energy_mat_mul_rel = round(energy_mat_mul - energy_prime_multicores, 2),
@@ -173,10 +183,13 @@ for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc
 		mutate(
 			gain_baseline = ((total_energy - energy_consumption_table[energy_consumption_table$gp == baseline_name, ]$total_energy) / energy_consumption_table[energy_consumption_table$gp == baseline_name, ]$total_energy) * 100
 		)
+		
 	
 	energy_consumption_table <- energy_consumption_table %>%
 		rename(
-			"Configuration" = gp,
+			"Clock" = clock_source,
+			"VREG" = vreg_output,
+			"Freq" = clock_freq,
 			"Prime (J)" = energy_prime_rel,
 			"Prime multicores (J)" = energy_prime_multicores_rel,
 			"Mat mul int (J)" = energy_mat_mul_rel,
@@ -190,7 +203,7 @@ for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc
 	#content <- ifelse(energy_consumption_table$Configuration != baseline_name, ifelse(energy_consumption_table$row_num %% 2 == 0, "grey90", "grey95"), "grey75")
 	#content <- ifelse(energy_consumption_table$row_num == 0, "grey90", "grey95")
 	colors <- c("#AAAAAA", "#EEB8FF", "#B8B8FF", "#FFDC8A")
-	content <- rep(colors, each = 9)
+	content <- rep(colors, each = ncol(energy_consumption_table))
 	
 	fill_matrix <- matrix(
 		content,
@@ -198,21 +211,30 @@ for(expe in c(baseline_f, pll_f, rosc_f, xosc_f, lposc_dft_f, lposc_max_f, lposc
 		ncol = ncol(energy_consumption_table),
 		byrow = TRUE
 	)
-	fill_matrix[, which(names(energy_consumption_table) == "% baseline (%)")-1] <-  # -1 because we are removing row_num column later, shifting the colors of matrix to the left 
+	fill_matrix[, which(names(energy_consumption_table) == "% baseline (%)")-2] <-  # -2 because we are removing columns later, shifting the colors of matrix to the left 
 		ifelse(energy_consumption_table$`% baseline (%)` > 0, "#ffcccc",
 					 ifelse(energy_consumption_table$`% baseline (%)` < 0, "#ccffcc", fill_matrix))
 	tt <- ttheme_default(core = list(bg_params = list(fill = fill_matrix)))
 		
-	energy_consumption_table <- energy_consumption_table %>% select(-row_num) 
+	energy_consumption_table <- energy_consumption_table %>% select(-row_num, -gp) 
 	table_grob <- tableGrob(energy_consumption_table, rows = NULL, theme = tt)
+	table_with_title <- arrangeGrob(
+		textGrob(
+			"Energy consumption for each benchmark according to the configuration",
+			gp = gpar(fontsize = 14)
+		),
+		table_grob,
+		ncol = 1,
+		heights = c(0.5, 0.9)
+	)
 	#pdf(paste(folder, pdf_name, "_table.pdf", sep=""), width = 15)
 	#grid.table(energy_consumption_table, rows = NULL, theme = tt)
 
 	p2 <- p2 + guides(color = "none", fill = "none", linetype = "none")
 	#combined_plot <- (p1 + p2) + plot_layout(guides = "collect") & theme(legend.position = "top")
 	combined_plot <- (p1 + plot_layout(guides = "collect") & theme(legend.position = "top")) / 
-		wrap_elements(table_grob) +
-		plot_layout(heights = c(4,1))
+		wrap_elements(table_with_title) +
+		plot_layout(heights = c(4,2))
 
 	write.csv(power_summary, paste(folder, "power_summary.csv", sep=""))
 	write.csv(energy_consumption, paste(folder, "energy_consumption.csv", sep=""))

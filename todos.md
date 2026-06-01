@@ -12,15 +12,15 @@
 - [x] plots ROSC 150 to 250MHz with lowest V possible
 - [x] have a table instead of a plot for the energy consumption. The table prints results according to the benchmark
 - [ ] re-write some of the expe setup and result section with the new results
+    - [ ] remove noop operation on manuscript, redo figures without the noop operations 
+    - [ ] correct results in the paper (replace graphs, rewrite texts, and reconsider conclusions)
+    - [ ] include the new experiments in the paper
 - understand why ROSC is advertised as low power
     - [ ] have results when disabling plls and xosc
     - [ ] expe comparing results XOSC and ROSC
     - [ ] research designs of PLL and ROSC and understand why ROSC consumes more on high frequencies
     - [ ] do expes below 20 MHz for the ROSC
 
-- [ ] remove noop operation on manuscript, redo figures without the noop operations 
-- [ ] correct results in the paper (replace graphs, rewrite texts, and reconsider conclusions)
-- [ ] include the new experiments in the paper
 
 - [ ] quantify the variability of the ROSC frequency according to the board (need at least 5 boards)
 - [ ] plot the result for one clock according to type of benchmark and see how the median power consumption changes 
