@@ -97,7 +97,9 @@ void iteration_end(uint phase, char* buffer) {
 
 	// End of iteration, reset the board
 	watchdog_hw->scratch[0] = RESET_VAL;
+	sleep_us((int)(10*US*TIME_RATE));
 	vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
+	sleep_us((int)(20*US*TIME_RATE));
 	watchdog_reboot(0, 0, 0);
 }
 

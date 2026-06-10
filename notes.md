@@ -1,3 +1,10 @@
+# meeting 2026-06-04
+- [x] energy consumption summary in table
+- [x] hard to give ccl because parameters are mixed
+- [x] gather VREG experiments and clock freq expes together?
+- [x] include same frequency experiments
+- [x] relevance of describing everything? Especially energy consummption? Smaller paragraphs?
+
 # meeting 2026-05-26
 - [x] comparison benchs wo noop bench noop (figures paper with figures in wo_noop/)
 - [x] comparison same frequencies PLL and ROSC for different VREGS outputs: 11V_PLL_lowvreg_ROSC_bis.pdf and lowvreg_PLL_lowvreg_ROSC.pdf

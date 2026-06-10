@@ -145,30 +145,30 @@ static struct config configs[] = {
 
 	// PLL range
 	// The maximum frequency the board can reach at 1.1V is 312MHz (https://learn.pimoroni.com/article/overclocking-the-pico-2)
-	{PLL_SYS, 840*MHZ, 7, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true},  // 20MHz 
-	{PLL_SYS, 1260*MHZ, 7, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 30MHz 
-	{PLL_SYS, 1440*MHZ, 6, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 40MHz 
-	{PLL_SYS, 1500*MHZ, 6, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 50MHz 
-	{PLL_SYS, 1500*MHZ, 5, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 60MHz 
-	{PLL_SYS, 1260*MHZ, 6, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 70MHz 
-	{PLL_SYS, 1440*MHZ, 6, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 80MHz 
-	{PLL_SYS, 1440*MHZ, 4, 4, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 90MHz 
-	{PLL_SYS, 1500*MHZ, 5, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 100MHz 
-	{PLL_SYS, 1320*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 110MHz 
-	{PLL_SYS, 1440*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 120MHz 
-	{PLL_SYS, 1560*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 130MHz 
-	{PLL_SYS, 1260*MHZ, 3, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 140MHz 
-	{PLL_SYS, 1500*MHZ, 2, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 150MHz 
-	{PLL_SYS, 1440*MHZ, 3, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 160MHz 
-	{PLL_SYS, 1360*MHZ, 2, 4, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 170MHz 
-	{PLL_SYS, 1440*MHZ, 2, 4, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 180MHz 
-	{PLL_SYS, 1140*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 190MHz 
-	{PLL_SYS, 1200*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 200MHz 
-	{PLL_SYS, 1260*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 210MHz 
-	{PLL_SYS, 1320*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 220MHz 
-	{PLL_SYS, 1380*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 230MHz 
-	{PLL_SYS, 1440*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 240MHz 
-	{PLL_SYS, 1500*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 250MHz 
+	//{PLL_SYS, 840*MHZ, 7, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true},  // 20MHz 
+	//{PLL_SYS, 1260*MHZ, 7, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 30MHz 
+	//{PLL_SYS, 1440*MHZ, 6, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 40MHz 
+	//{PLL_SYS, 1500*MHZ, 6, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 50MHz 
+	//{PLL_SYS, 1500*MHZ, 5, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 60MHz 
+	//{PLL_SYS, 1260*MHZ, 6, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 70MHz 
+	//{PLL_SYS, 1440*MHZ, 6, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 80MHz 
+	//{PLL_SYS, 1440*MHZ, 4, 4, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 90MHz 
+	//{PLL_SYS, 1500*MHZ, 5, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 100MHz 
+	//{PLL_SYS, 1320*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 110MHz 
+	//{PLL_SYS, 1440*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 120MHz 
+	//{PLL_SYS, 1560*MHZ, 6, 2, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 130MHz 
+	//{PLL_SYS, 1260*MHZ, 3, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 140MHz 
+	//{PLL_SYS, 1500*MHZ, 2, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 150MHz 
+	//{PLL_SYS, 1440*MHZ, 3, 3, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 160MHz 
+	//{PLL_SYS, 1360*MHZ, 2, 4, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 170MHz 
+	//{PLL_SYS, 1440*MHZ, 2, 4, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 180MHz 
+	//{PLL_SYS, 1140*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 190MHz 
+	//{PLL_SYS, 1200*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 200MHz 
+	//{PLL_SYS, 1260*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 210MHz 
+	//{PLL_SYS, 1320*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 220MHz 
+	//{PLL_SYS, 1380*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 230MHz 
+	//{PLL_SYS, 1440*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 240MHz 
+	//{PLL_SYS, 1500*MHZ, 1, 6, 0, 0, 0, 0, 0, VREG_DEFAULT, true}, // 250MHz 
 																																// 
 	// PLL range low vreg
 	// The maximum frequency the board can reach at 1.1V is 312MHz (https://learn.pimoroni.com/article/overclocking-the-pico-2)
@@ -204,46 +204,46 @@ static struct config configs[] = {
 	//{PLL_SYS, 760*MHZ, 5, 5, 0, 0, 0, 0, 0, VREG_DEFAULT, true},								 // 30.240MHz
 	
 	// Baseline
-	//{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, PLL_DEFAULT_POSTDIV1, PLL_DEFAULT_POSTDIV2, 0, 0, 0, 0, 0, VREG_DEFAULT, true},															 // 73.99 mW
-	//{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_DEFAULT, true},																																															 // 14.85 mW
-	//{ROSC, 0, 0, 0, ROSC_DEFAULT_DIVIDER, ROSC_DEFAULT_RANGE, ROSC_DEFAULT_DRIVE_STRENGTH, ROSC_DEFAULT_DRIVE_STRENGTH, 0, VREG_DEFAULT, true},			 // 13.14 mW
+	{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, PLL_DEFAULT_POSTDIV1, PLL_DEFAULT_POSTDIV2, 0, 0, 0, 0, 0, VREG_DEFAULT, true},															 // 73.99 mW
+	{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_DEFAULT, true},																																															 // 14.85 mW
+	{ROSC, 0, 0, 0, ROSC_DEFAULT_DIVIDER, ROSC_DEFAULT_RANGE, ROSC_DEFAULT_DRIVE_STRENGTH, ROSC_DEFAULT_DRIVE_STRENGTH, 0, VREG_DEFAULT, true},			 // 13.14 mW
 	
-	//// pll Min frequency, default voltage
-	//{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_DEFAULT, true},																						 // 18.10 mW
-	//// pll Default frequency, min voltage
-	//{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, PLL_DEFAULT_POSTDIV1, PLL_DEFAULT_POSTDIV2, 0, 0, 0, 0, 0, VREG_MIN_PLL, true},															 // 54.18 mW
-	//// pll Min frequency, min voltage
-	//{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_MIN_PLL, true},																						 // 22.62 mW
-																																																																									 // 
-	//// rosc Min frequency, default voltage
-	//{ROSC, 0, 0, 0, ROSC_MAX_DIVIDER, ROSC_MIN_RANGE, ROSC_MIN_DRIVE_STRENGTH, ROSC_MIN_DRIVE_STRENGTH, 0, VREG_DEFAULT, true},											 // 9.82 mW
-	//// rosc Default frequency, min voltage
-	//{ROSC, 0, 0, 0, ROSC_DEFAULT_DIVIDER, ROSC_DEFAULT_RANGE, ROSC_DEFAULT_DRIVE_STRENGTH, ROSC_DEFAULT_DRIVE_STRENGTH, 0, VREG_VOLTAGE_0_80, true}, // 5.94 mW
-	//// rosc Min frequency, min voltage
-	//{ROSC, 0, 0, 0, ROSC_MAX_DIVIDER, ROSC_MIN_RANGE, ROSC_MIN_DRIVE_STRENGTH, ROSC_MIN_DRIVE_STRENGTH, 0, VREG_VOLTAGE_0_80, true},					       // 4.24 mW
-																																																																								 // 
-	//// Min frequency, min voltage
-	//{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_00, true},
-	//{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_VOLTAGE_0_90, true},
-	//{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_VOLTAGE_0_80, true},
+	// pll Min frequency, default voltage
+	{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_DEFAULT, true},																						 // 18.10 mW
+	// pll Default frequency, min voltage
+	{PLL_SYS, PLL_DEFAULT_VCO_FREQ_HZ, PLL_DEFAULT_POSTDIV1, PLL_DEFAULT_POSTDIV2, 0, 0, 0, 0, 0, VREG_MIN_PLL, true},															 // 54.18 mW
+	// pll Min frequency, min voltage
+	{PLL_SYS, PLL_MIN_VCO_FREQ_HZ, PLL_MAX_POSTDIV, PLL_MAX_POSTDIV, 0, 0, 0, 0, 0, VREG_MIN_PLL, true},																						 // 22.62 mW
+																																																																								  
+	// rosc Min frequency, default voltage
+	{ROSC, 0, 0, 0, ROSC_MAX_DIVIDER, ROSC_MIN_RANGE, ROSC_MIN_DRIVE_STRENGTH, ROSC_MIN_DRIVE_STRENGTH, 0, VREG_DEFAULT, true},											 // 9.82 mW
+	// rosc Default frequency, min voltage
+	{ROSC, 0, 0, 0, ROSC_DEFAULT_DIVIDER, ROSC_DEFAULT_RANGE, ROSC_DEFAULT_DRIVE_STRENGTH, ROSC_DEFAULT_DRIVE_STRENGTH, 0, VREG_VOLTAGE_0_80, true}, // 5.94 mW
+	// rosc Min frequency, min voltage
+	{ROSC, 0, 0, 0, ROSC_MAX_DIVIDER, ROSC_MIN_RANGE, ROSC_MIN_DRIVE_STRENGTH, ROSC_MIN_DRIVE_STRENGTH, 0, VREG_VOLTAGE_0_80, true},					       // 4.24 mW
+																																																																							 
+	// Min frequency, min voltage
+	{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_VOLTAGE_1_00, true},
+	{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_VOLTAGE_0_90, true},
+	{XOSC, 0, 0, 0, 0, 0, 0, 0, 0, VREG_VOLTAGE_0_80, true},
 	
-	//// lposc Default trim
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x20, VREG_VOLTAGE_1_10, true}, // 5.48 mW
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x20, VREG_VOLTAGE_1_00, true}, // 4.53 mW
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x20, VREG_VOLTAGE_0_90, true}, // 3.89 mW
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x20, VREG_VOLTAGE_0_80, true}, // 3.48 mW
+	// lposc Default trim
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x20, VREG_VOLTAGE_1_10, true}, // 5.48 mW
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x20, VREG_VOLTAGE_1_00, true}, // 4.53 mW
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x20, VREG_VOLTAGE_0_90, true}, // 3.89 mW
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x20, VREG_VOLTAGE_0_80, true}, // 3.48 mW
 
-	//// lposc Max frequency (trim)                                        
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0xf0, VREG_VOLTAGE_1_10, true}, // 5.43 mW
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0xf0, VREG_VOLTAGE_1_00, true}, // 4.53 mW
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0xf0, VREG_VOLTAGE_0_90, true}, // 3.90 mW
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0xf0, VREG_VOLTAGE_0_80, true}, // 3.49 mW
+	// lposc Max frequency (trim)                                        
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0xf0, VREG_VOLTAGE_1_10, true}, // 5.43 mW
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0xf0, VREG_VOLTAGE_1_00, true}, // 4.53 mW
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0xf0, VREG_VOLTAGE_0_90, true}, // 3.90 mW
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0xf0, VREG_VOLTAGE_0_80, true}, // 3.49 mW
 
-	//// lposc Min frequency (no trim), min voltage                        
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_1_10, true}, // 5.43 mW
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_1_00, true}, // 4.53 mW
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_0_90, true}, // 3.90 mW
-	//{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_0_80, true}, // 3.49 mW
+	// lposc Min frequency (no trim), min voltage                        
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_1_10, true}, // 5.43 mW
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_1_00, true}, // 4.53 mW
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_0_90, true}, // 3.90 mW
+	{LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x00, VREG_VOLTAGE_0_80, true}, // 3.49 mW
 };
 static const uint nb_expes = sizeof(configs)/sizeof(configs[0]);
 
@@ -270,13 +270,30 @@ static inline void restart_all_ticks(void) {
 	start_all_ticks();
 }
 
+static inline uint set_clock_source_xosc() {
+	xosc_init();
+	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+	restart_all_ticks();
+	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, XOSC_HZ);
+	
+	uint clk_src_freq = XOSC_HZ; // Known fix frequency
+	
+	// Disable unused clock sources
+	pll_deinit(pll_sys);
+	pll_deinit(pll_usb);
+	rosc_disable();
+	
+	return clk_src_freq;
+}
+
 // Clock source leverages
 static inline uint set_clock_source_lposc(uint trim) {
 	// lposc has to be clk_ref
 	// Put xosc as clk_ref to count lposc frequency
-	xosc_init();
-	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
-	restart_all_ticks();
+	//xosc_init();
+	//clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
+	//restart_all_ticks();
+	set_clock_source_xosc();
 	
 	// Specify lposc frequency
 	powman_clear_bits(&powman_hw->lposc, POWMAN_LPOSC_TRIM_BITS);
@@ -330,27 +347,9 @@ static inline uint set_clock_source_rosc(uint div, uint range, uint freqa, uint 
 	
 	return clk_src_freq;
 }
-static inline uint set_clock_source_xosc() {
-	xosc_init();
-	clock_configure_undivided(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ);
-	restart_all_ticks();
-	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, XOSC_HZ);
-	
-	uint clk_src_freq = XOSC_HZ; // Known fix frequency
-	
-	// Disable unused clock sources
-	pll_deinit(pll_sys);
-	pll_deinit(pll_usb);
-	rosc_disable();
-	
-	return clk_src_freq;
-}
 
 static inline uint set_clock_source_pll(uint vco_freq, uint div1, uint div2) {
-	bool good = set_sys_clock_khz(vco_freq/1000/div1/div2, true);
-	if(!good) {
-		printf("problem\n");
-	}
+	set_sys_clock_pll(vco_freq, div1, div2);
 	sleep_ms(100);
 	
 	uint clk_src_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY) * KHZ;
