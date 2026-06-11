@@ -12,13 +12,13 @@
 - [x] plots ROSC 150 to 250MHz with lowest V possible
 - [x] have a table instead of a plot for the energy consumption. The table prints results according to the benchmark
 - [ ] re-write some of the expe setup and result section with the new results
-    - [ ] remove noop operation on manuscript
+    - [x] remove noop operation on manuscript
     - [x] redo figures without the noop operations
-    - [ ] correct results in the paper
-        - [ ] replace graphs
-        - [ ] rewrite texts
-        - [ ] reconsider conclusions
-    - [ ] include the new experiments in the paper
+    - [x] correct results in the paper
+        - [x] replace graphs
+        - [x] rewrite texts
+        - [x] reconsider conclusions
+    - [x] include the new experiments in the paper
 - understand why ROSC is advertised as low power
     - [x] double-check results when disabling plls and xosc
     - [ ] expes with an wo deactivating pll for xosc and rosc

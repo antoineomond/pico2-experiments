@@ -1,0 +1,5 @@
+add_subdirectory(bme680_pico2)
+add_subdirectory(bme68x_driver)
+add_subdirectory(experiments)
+add_subdirectory(sx1262_wvshre_pico2)
+add_subdirectory(sx126x_driver)

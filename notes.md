@@ -1,3 +1,30 @@
+- gp20 -> dio
+- gp8 -> busy
+- gp9 -> reset
+- rx -> miso/sdo
+* orange: clk
+* white/grey: rx
+* yellow: tx
+* blue: cs
+
+problematic setup and observation:
+- 3V3 power supply from a converter
+- connect gnds of the power supply to both waveshare sx1262 and adafruit BME680
+- connect the positive wire of the power supply to the 3V3 pin of sx1262, powering the sx1262
+- connect the SDO pin (MISO) from BME680 to the MISO pin of sx1262
+- the BME680 is powered on while it shouldn't (the green led wired to the power input is turned on)
+- checked that there is no continuity between pins in bme680 or sx1262 (except gnds)
+How is it possible?
+- back-powering:
+    - MISO: 2.9V
+    - VIN: 2.8V
+    - 3V3: continuously increases, stopped at 400mV  
+- there is ESD protection diodes on SCK and SDI, but not on SDO
+
+refs:
+- Grounds must be connected when two different power supplies are used: https://forum.arduino.cc/t/will-spi-work-between-two-systems-with-different-power-supplies/168680
+- What exactly is green LED on BME680: https://forums.adafruit.com/viewtopic.php?t=175379 (last comment)
+
 # meeting 2026-06-04
 - [x] energy consumption summary in table
 - [x] hard to give ccl because parameters are mixed
