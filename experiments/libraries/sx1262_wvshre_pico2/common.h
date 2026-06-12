@@ -52,8 +52,8 @@ typedef struct
 			sleep_us((int)(TIME_RATE*100000));                                                                             \
 			ASSERT_SX126X_RC(sx126x_get_status(context, radio_status));																 \
 			sleep_us((int)(TIME_RATE*50000));                                                                             \
-			//printf("chip_mode (%s): %d\n", fname, radio_status->chip_mode);				 \
-			//printf("cmd_status (%s): %d\n", fname, radio_status->cmd_status);			 \
+			printf("chip_mode (%s): %d\n", fname, radio_status->chip_mode);				 \
+			printf("cmd_status (%s): %d\n", fname, radio_status->cmd_status);			 \
     }
 
 extern float TIME_RATE;

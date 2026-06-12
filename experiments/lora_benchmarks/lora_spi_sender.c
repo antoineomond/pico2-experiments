@@ -52,6 +52,7 @@ uint8_t  buffer[PAYLOAD_LENGTH];
 volatile bool irq_fired = false;
 sx126x_chip_status_t* radio_status;
 float TIME_RATE = 1; // LPOSC isn't fast enough to generate the 1us tick (hardwired). The TIME_RATE divide any timing to account for this slowness 
+uint16_t irq_mask  = 0b0000001000000001; // Activate TxDone and timeout IRQ (8.5 IRQ Handling)
 
 const spi_connection sx1262_connection = {
 	.spio_rx  = PICO_DEFAULT_SPI_RX_PIN,
@@ -89,10 +90,15 @@ void dio_gpio_callback(uint gpio, uint32_t events)
 	//printf("dio_gpio_callback\n");
 	//sleep_us((int)(TIME_RATE*50000));
 	if (gpio == 20 && events == 8) {
-		sx126x_irq_mask_t irq_mask;
-		sx126x_clear_irq_status(&sx1262_connection, 0b1111111111111111);
-		sx126x_get_irq_status(&sx1262_connection, &irq_mask);
-		tx_done = true;
+		gpio_acknowledge_irq(gpio, irq_mask);
+		sx126x_get_and_clear_irq_status(&sx1262_connection, &irq_mask);
+		print_irq_to_str(irq_mask);
+		if(irq_mask & 1) { // TxDone
+			tx_done = true;
+		}
+		//sx126x_irq_mask_t irq_mask;
+		//sx126x_clear_irq_status(&sx1262_connection, 0b1111111111111111);
+		//sx126x_get_irq_status(&sx1262_connection, &irq_mask);
 		//led_blink(1);
 		
 		//printf("IRQ received: ");
@@ -340,31 +346,12 @@ void leverage_turn_off_clocks() {
 }
 
 int main() {
-	//assign_clk_src();
-	//deactivate_pll();
-	//deactivate_xosc();
-	//clock_stop(clk_adc);
-	//clock_stop(clk_usb);
-	//clock_stop(clk_hstx);
-	//rosc_disable();
-	//setup_default_uart();
-	//leverage_reduced_wake_en_gating();
-	//leverage_turn_off_clocks();
-	//leverage_pull_down_gpios();
-	//sleep_ms(500);
-	//leverage_clock_source_lposc();
-	//vreg_set_voltage(9);
-	
-	//sleep_run_from_dormant_source(DORMANT_SOURCE_LPOSC);
-	
 	stdio_init_all(); // pins + init things such as uart and usb 
 	sleep_ms(1000);
-	printf("testwoweifjiowefj\n");
 	pico2_spi_init_default(115200);
 	sx1262_pico2_init(&dio_gpio_callback);
-	bme680_pico2_init();
-	uint16_t irq_mask  = 0b0000001000000001; // Activate TxDone and timeout IRQ (8.5 IRQ Handling)
 	sx1262_lora_init(&sx1262_connection, irq_mask);
+	bme680_pico2_init();
 	wait_sx1262_busy();
 	SX1262_GET_STATUS(sx126x_set_pa_cfg(&sx1262_connection, &pa_cfg), "sx126x_set_pa_cfg");
 	wait_sx1262_busy();
@@ -398,6 +385,8 @@ int main() {
 			//measurements[3], measurements[3] >> 8, measurements[3] >> 16, measurements[3] >> 24, // gas
 		};
 		wait_sx1262_busy();
+		uint32_t temperature = measurements[0] | (measurements[1] << 8) | (measurements[2] << 16) | (measurements[3] << 24);
+		printf("Temp. = %.2fC\n", temperature / 100.0);
 		sx126x_write_buffer(&sx1262_connection, offset, buffer, PAYLOAD_LENGTH);
 		
 		// Set radio to TX mode
@@ -413,9 +402,9 @@ int main() {
 		//printf("Pressure to send: %d\n", measurements[2]);
 		//printf("Gas resistance to send: %d\n", measurements[3]);
 		wait_sx1262_busy();
-		printf("sending...\n");
-		sx126x_set_tx(&sx1262_connection, timeout_ms);
-		printf("sending done\n");
+		//printf("sending...\n");
+		SX1262_GET_STATUS(sx126x_set_tx(&sx1262_connection, timeout_ms), "set_tx");
+		//printf("sending done\n");
 		
 		//sleep_ms((int)(SLEEP_RATE*sleep_duration));
 		//if (i % 10 == 0) {
