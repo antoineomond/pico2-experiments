@@ -32,7 +32,7 @@
 #define BENCH_MAT_SIZE 43000
 #define NB_ITERATIONS_MAT_MUL 10
 #define NB_ITERATIONS_MAT_MUL_LPOSC 1
-#define NB_PCKS_TO_SEND_LORA 5
+#define NB_PCKS_TO_SEND_LORA 1
 
 // Benchmark correct results
 #define CORRECT_PRIME 669
@@ -302,20 +302,17 @@ void initialise_lora_bench() {
 
 uint8_t benchmark_lora_spi(uint benchmark_size) {
 	uint32_t timeout_ms = 1000;
-	for (int i = 0; i < NB_PCKS_TO_SEND_LORA; i++) {
-		uint32_t measurements[4] = {0x0000, 0x0000, 0x0000, 0x0000};
-		trigger_bme680_msrmt(measurements);
-		uint8_t offset = 0;
-		uint8_t buffer[PAYLOAD_LENGTH] = {
-			measurements[0], measurements[0] >> 8, measurements[0] >> 16, measurements[0] >> 24,
-		};
-		wait_sx1262_busy();
-		sx126x_write_buffer(&sx1262_connection, offset, buffer, PAYLOAD_LENGTH);
-		wait_sx1262_busy();
-		sx126x_set_tx(&sx1262_connection, timeout_ms);
-		while(!tx_done) {};
-		sleep_us((int)(1*US*TIME_RATE));
-	}
+	uint32_t measurements[4] = {0x0000, 0x0000, 0x0000, 0x0000};
+	trigger_bme680_msrmt(measurements);
+	uint8_t offset = 0;
+	uint8_t buffer[PAYLOAD_LENGTH] = {
+		measurements[0], measurements[0] >> 8, measurements[0] >> 16, measurements[0] >> 24,
+	};
+	wait_sx1262_busy();
+	sx126x_write_buffer(&sx1262_connection, offset, buffer, PAYLOAD_LENGTH);
+	wait_sx1262_busy();
+	sx126x_set_tx(&sx1262_connection, timeout_ms);
+	while(!tx_done) {};
 	return 1;
 }
 
@@ -379,9 +376,12 @@ uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run, s
 	// LoRa benchmarks
 	if(benchmarks_to_run & 0b1000000) {
 		initialise_lora_bench();
+		//for (int i = 0; i < NB_PCKS_TO_SEND_LORA; i++) {
 		gpio_put(expe_pin, 1);
 		results |= benchmark_lora_spi(PAYLOAD_LENGTH) << 6; // Uses peripheral (SPI)
 		gpio_put(expe_pin, 0);
+		//sleep_us((int)(1*US*TIME_RATE));
+		//}
 	}
 	sleep_us((int)(1000000*TIME_RATE));
 	return results;

@@ -314,7 +314,7 @@ void trigger_bme680_msrmt(uint32_t* measurements) {
 	// Wait until data is ready
 	uint8_t new_data_0;
 	uint8_t all_good = 0;
-	sleep_us((int)(TIME_RATE*500000));
+	//sleep_us((int)(TIME_RATE*500000));
 	while (all_good != 1) {
 		all_good = 1;
 		// Check msrmt status
@@ -334,7 +334,7 @@ void trigger_bme680_msrmt(uint32_t* measurements) {
 		//	printf("Heating time not sufficient or too high temperature\n");
 		//	all_good = 0;
 		//}
-		sleep_us((int)(TIME_RATE*1000000));
+		sleep_us((int)(TIME_RATE*1000));
 	}
 	// Read temperature data
 	//printf("Read temperature data\n");
