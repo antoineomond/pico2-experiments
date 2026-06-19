@@ -5,7 +5,7 @@
 #include "target_configuration.h"
 
 // Select parameters
-#define PHASE 0
+#define PHASE 1
 #define BENCHMARKS_TO_RUN 0b1000000
 #define PRINT_CONFS_CSV 0
 struct bench_sizes bench_sizes[] = {
@@ -26,8 +26,6 @@ int main() {
 	uint expe_num = watchdog_hw->scratch[1]%nb_expes;
 	char buffer[LINE_SIZE];
 	iteration_init(PHASE, configs[expe_num].vreg_output);
-	stdio_init_all();
-	sleep_ms(1000);
 	
 	uint clk_src_freq = switch_configuration_from_parameter(&configs[expe_num]);
 	

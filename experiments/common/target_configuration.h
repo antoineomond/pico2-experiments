@@ -355,9 +355,10 @@ static inline uint set_clock_source_pll(uint vco_freq, uint div1, uint div2) {
 	uint clk_src_freq = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY) * KHZ;
 	
 	clock_configure_undivided(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, clk_src_freq);
+	clock_configure_undivided(clk_peri, 0, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS, clk_src_freq);
 	
 	// Disable unused clock sources
-	//pll_deinit(pll_usb);
+	pll_deinit(pll_usb);
 	rosc_disable();
 	
 	return clk_src_freq;
@@ -376,7 +377,7 @@ static inline uint switch_configuration_from_parameter(const struct config* conf
 	
 	uint clk_src_freq;
 	if(config->clock_source == PLL_SYS) {
-		//clk_src_freq = set_clock_source_pll(config->pll_vco_freq, config->pll_div1, config->pll_div2);
+		clk_src_freq = set_clock_source_pll(config->pll_vco_freq, config->pll_div1, config->pll_div2);
 	}
 	if(config->clock_source == XOSC) {
 		clk_src_freq = set_clock_source_xosc();

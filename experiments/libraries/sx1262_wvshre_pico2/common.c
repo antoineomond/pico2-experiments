@@ -108,34 +108,34 @@ void sx1262_lora_init(const void* context, uint16_t irq_mask) {
   gpio_put(RESET_PIN, 1);
 	sleep_us((int)(TIME_RATE*1000000));
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_set_standby(context, SX126X_STANDBY_CFG_RC), "sx126x_set_standby");
+	sx126x_set_standby(context, SX126X_STANDBY_CFG_RC);
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_set_pkt_type(context, SX126X_PKT_TYPE_LORA), "sx126x_set_pkt_type");
+	sx126x_set_pkt_type(context, SX126X_PKT_TYPE_LORA);
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_set_rf_freq(context, FREQ_HZ), "sx126x_set_rf_freq");
+	sx126x_set_rf_freq(context, FREQ_HZ);
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_set_lora_mod_params(context, &lora_mod_params), "sx126x_set_lora_mod_params");
+	sx126x_set_lora_mod_params(context, &lora_mod_params);
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_set_lora_pkt_params(context, &lora_pkt_params), "sx126x_set_lora_pkt_params");
+	sx126x_set_lora_pkt_params(context, &lora_pkt_params);
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_set_buffer_base_address(context, TX_BUF_ADDRESS, RX_BUF_ADDRESS), "sx126x_set_buffer_base_address");
+	sx126x_set_buffer_base_address(context, TX_BUF_ADDRESS, RX_BUF_ADDRESS);
 
 	// Configure DIO and IRQ
 	uint16_t dio1_mask = irq_mask; // Need to correspond to irq mask
 	uint16_t dio2_mask = 0;				 // Not using dio2 for now
 	uint16_t dio3_mask = 0;				 // Not using dio2 for now
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_set_dio_irq_params(context, irq_mask, dio1_mask, dio2_mask, dio3_mask), "sx126x_set_dio_irq_params");
+	sx126x_set_dio_irq_params(context, irq_mask, dio1_mask, dio2_mask, dio3_mask);
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_set_rx_tx_fallback_mode(context, FALLBACK_MODE), "sx126x_set_rx_tx_fallback_mode");
+	sx126x_set_rx_tx_fallback_mode(context, FALLBACK_MODE);
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_set_lora_sync_word(context, LORA_SYNCWORD), "sx126x_set_lora_sync_word"); // (SWSD003)
+	sx126x_set_lora_sync_word(context, LORA_SYNCWORD); // (SWSD003)
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_clear_device_errors(context), "sx126x_clear_device_errors");
+	sx126x_clear_device_errors(context);
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_reset_stats(context), "sx126x_reset_stats");
+	sx126x_reset_stats(context);
 	//wait_sx1262_busy();
 	//SX1262_GET_STATUS(sx126x_set_dio2_as_rf_sw_ctrl(context, true), "sx126x_set_dio2_as_rf_sw_ctrl");
 	wait_sx1262_busy();
-	SX1262_GET_STATUS(sx126x_set_dio3_as_tcxo_ctrl(context, SX126X_TCXO_CTRL_3_3V, 300), "sx126x_set_dio3_as_tcxo_ctrl");
+	sx126x_set_dio3_as_tcxo_ctrl(context, SX126X_TCXO_CTRL_3_3V, 300);
 }
