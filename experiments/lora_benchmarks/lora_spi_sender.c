@@ -3,26 +3,13 @@
 #include <pico/time.h>
 #include "hardware/clocks.h"
 #include "hardware/xosc.h"
-#include "hardware/structs/rosc.h"
 #include "hardware/rosc.h"
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include "pico/stdlib.h"
-#include "pico/binary_info.h"
-#include "hardware/spi.h"
 #include "sx126x.h"
-#include "sx126x_hal.h"
-#include "printers/sx126x_str.h"
 #include "configuration/apps_configuration.h"
-#include "configuration/apps_common.h"
 #include "configuration/apps_utilities.h"
 #include "common.h"
 #include "bme680_pico2.c"
-//#include "pico/aon_timer.h"
-//#include <time.h>
-//#include <sys/time.h>
-//#include <time.h>
 #include "hardware/pll.h"
 #include "pico/sleep.h"
 #include "hardware/powman.h"
@@ -87,8 +74,6 @@ void led_blink(int count) {
 bool tx_done = false;
 void dio_gpio_callback(uint gpio, uint32_t events)
 {
-	//printf("dio_gpio_callback\n");
-	//sleep_us((int)(TIME_RATE*50000));
 	if (gpio == 20 && events == 8) {
 		gpio_acknowledge_irq(gpio, irq_mask);
 		sx126x_get_and_clear_irq_status(&sx1262_connection, &irq_mask);
@@ -96,14 +81,6 @@ void dio_gpio_callback(uint gpio, uint32_t events)
 		if(irq_mask & 1) { // TxDone
 			tx_done = true;
 		}
-		//sx126x_irq_mask_t irq_mask;
-		//sx126x_clear_irq_status(&sx1262_connection, 0b1111111111111111);
-		//sx126x_get_irq_status(&sx1262_connection, &irq_mask);
-		//led_blink(1);
-		
-		//printf("IRQ received: ");
-		//print_irq_to_str(irq_mask);
-		//printf("\n");
 	}
 }
 
@@ -356,9 +333,6 @@ int main() {
 	SX1262_GET_STATUS(sx126x_set_pa_cfg(&sx1262_connection, &pa_cfg), "sx126x_set_pa_cfg");
 	wait_sx1262_busy();
 	SX1262_GET_STATUS(sx126x_set_tx_params(&sx1262_connection, tx_params.power, tx_params.ramp_time), "sx126x_set_tx_params");
-	
-	
-	//sleep_us((int)(1000000*TIME_RATE));
 	uint32_t timeout_ms = 1000;
 	uint32_t measurements[4] = {0x0000, 0x0000, 0x0000, 0x0000};
 	uint16_t nb_iterations = NB_ITERATIONS;
@@ -366,17 +340,11 @@ int main() {
 	int64_t ms = to_ms_since_boot(t);
 	absolute_time_t new_t = get_absolute_time();
 	int64_t new_ms = to_ms_since_boot(t);
-	//printf("Time since boot: %lld ms\n", ms);
-	//led_blink(4);
 	uint16_t nb_iter = 7000;
 	uint16_t sleep_duration = 1000;
 	for (int i = 0; i < nb_iter; i++) {
-		//printf("Reading sensor data...\n");
 		trigger_bme680_msrmt(measurements);
-		sleep_us((int)(50000*TIME_RATE));
-
-		//printf("time: %d\n", ts->tv_sec);
-		// Write buffer
+		//sleep_us((int)(50000*TIME_RATE));
 		uint8_t offset = 0; // Where to write in data buffer (value between 0 and 256). The data buffer is shared for tx and rx
 		uint8_t buffer[PAYLOAD_LENGTH] = {
 			measurements[0], measurements[0] >> 8, measurements[0] >> 16, measurements[0] >> 24, // temperature
@@ -385,42 +353,9 @@ int main() {
 			//measurements[3], measurements[3] >> 8, measurements[3] >> 16, measurements[3] >> 24, // gas
 		};
 		wait_sx1262_busy();
-		uint32_t temperature = measurements[0] | (measurements[1] << 8) | (measurements[2] << 16) | (measurements[3] << 24);
-		printf("Temp. = %.2fC\n", temperature / 100.0);
 		sx126x_write_buffer(&sx1262_connection, offset, buffer, PAYLOAD_LENGTH);
-		
-		// Set radio to TX mode
-		//printf("Sending data...\n");
-		//new_t = get_absolute_time();
-		//new_ms = to_ms_since_boot(new_t);
-		//printf("Temperature to send: %d (in %lld ms)\n", measurements[0], new_ms - ms);
-		//printf("new_ms, ms: %lld, %lld\n", new_ms,ms);
-		//printf("Time since last send: %lld\n", new_ms - ms);
-		//t = get_absolute_time();
-		//ms = to_ms_since_boot(t);
-		//printf("Humidity to send: %d\n", measurements[1]);
-		//printf("Pressure to send: %d\n", measurements[2]);
-		//printf("Gas resistance to send: %d\n", measurements[3]);
 		wait_sx1262_busy();
-		//printf("sending...\n");
 		SX1262_GET_STATUS(sx126x_set_tx(&sx1262_connection, timeout_ms), "set_tx");
-		//printf("sending done\n");
-		
-		//sleep_ms((int)(SLEEP_RATE*sleep_duration));
-		//if (i % 10 == 0) {
-		//	led_blink(2);
-		//	sleep_duration -= 100;
-		//}
-		////while(!tx_done) {tight_loop_contents();}
-		////led_blink(2);
-		////sleep_us((int)(1000000*TIME_RATE));
-		//
-		//struct timespec ts;
-		//aon_timer_get_time(&ts);
-		//////ts.tv_sec += 0;
-		//ts.tv_nsec += (int)(SLEEP_RATE*1000000000);
-		//go_dormant_until(&ts, &sleep_callback);
-		//led_blink(6);
 	}
 	while(1) {printf("idle..."); sleep_us((int)(1000000*TIME_RATE));} // Do not exit else cannot reboot using picotool
 	return 0;

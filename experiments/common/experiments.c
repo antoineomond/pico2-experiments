@@ -1,5 +1,6 @@
 #include "experiments.h"
 #include "target_configuration.h"
+#include <pico.h>
 #include "pico/stdlib.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,6 +16,13 @@
 #include "hardware/vreg.h"
 #include "hardware/powman.h"
 
+// LoRa benchmarks
+#include "sx126x.h"
+#include "common.h"
+#include "configuration/apps_configuration.h"
+#include "configuration/apps_utilities.h"
+#include "bme680_pico2.c"
+
 #define NB_BENCHMARKS 6
 
 // Benchmark sizes
@@ -24,6 +32,7 @@
 #define BENCH_MAT_SIZE 43000
 #define NB_ITERATIONS_MAT_MUL 10
 #define NB_ITERATIONS_MAT_MUL_LPOSC 1
+#define NB_PCKS_TO_SEND_LORA 5
 
 // Benchmark correct results
 #define CORRECT_PRIME 669
@@ -247,6 +256,69 @@ uint8_t benchmark_mat_mul_double(uint benchmark_size, uint nb_iteration_mat_mul)
 	return correct;
 }
 
+const spi_connection sx1262_connection = {
+	.spio_rx  = PICO_DEFAULT_SPI_RX_PIN,
+	.spio_csn = PICO_DEFAULT_SPI_CSN_PIN,
+	.spio_sck = PICO_DEFAULT_SPI_SCK_PIN,
+	.spio_tx  = PICO_DEFAULT_SPI_TX_PIN
+};
+
+const sx126x_pa_cfg_params_t pa_cfg = {
+	.pa_duty_cycle = 0x02,  // 0x02 = +14 dBm, 0x04 = +22 dBm
+	.hp_max				 = 0x02,  // Also related to dBm 
+	.device_sel		 = 0,     // SX1262 selection (1 is SX1261)
+	.pa_lut				 = 0x01   // Reserved, always 0x01
+};
+
+const sx1262_tx_params tx_params = {
+	.power = 0x16,              // Default +14 dBm if low power PA is selected
+	.ramp_time = PA_RAMP_TIME
+};
+volatile bool tx_done = false;
+uint16_t irq_mask  = 0b0000001000000001; // Activate TxDone and timeout IRQ (8.5 IRQ Handling)
+void dio_gpio_callback(uint gpio, uint32_t events)
+{
+	if (gpio == 20 && events == 8) {
+		gpio_put(expe_pin, 0);
+		gpio_acknowledge_irq(gpio, irq_mask);
+		sx126x_get_and_clear_irq_status(&sx1262_connection, &irq_mask);
+		//print_irq_to_str(irq_mask);
+		if(irq_mask & 1) { // TxDone
+			tx_done = true;
+		}
+	}
+}
+
+void initialise_lora_bench() {
+	pico2_spi_init_default(115200);
+	sx1262_pico2_init(&dio_gpio_callback);
+	sx1262_lora_init(&sx1262_connection, irq_mask);
+	bme680_pico2_init();
+	wait_sx1262_busy();
+	sx126x_set_pa_cfg(&sx1262_connection, &pa_cfg);
+	wait_sx1262_busy();
+	sx126x_set_tx_params(&sx1262_connection, tx_params.power, tx_params.ramp_time);
+}
+
+uint8_t benchmark_lora_spi(uint benchmark_size) {
+	uint32_t timeout_ms = 1000;
+	for (int i = 0; i < NB_PCKS_TO_SEND_LORA; i++) {
+		uint32_t measurements[4] = {0x0000, 0x0000, 0x0000, 0x0000};
+		trigger_bme680_msrmt(measurements);
+		uint8_t offset = 0;
+		uint8_t buffer[PAYLOAD_LENGTH] = {
+			measurements[0], measurements[0] >> 8, measurements[0] >> 16, measurements[0] >> 24,
+		};
+		wait_sx1262_busy();
+		sx126x_write_buffer(&sx1262_connection, offset, buffer, PAYLOAD_LENGTH);
+		wait_sx1262_busy();
+		sx126x_set_tx(&sx1262_connection, timeout_ms);
+		while(!tx_done) {};
+		sleep_us((int)(1*US*TIME_RATE));
+	}
+	return 1;
+}
+
 uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run, struct bench_sizes bench_sizes) {
 	// Sleep 10 seconds before starting benchmarks
 	sleep_us((int)(10*US*TIME_RATE));
@@ -301,6 +373,14 @@ uint8_t execute_benchmarks(bool clock_source_lposc, uint8_t benchmarks_to_run, s
 	if(benchmarks_to_run & 0b100000) {
 		gpio_put(expe_pin, 1);
 		results |= benchmark_mat_mul_double(BENCH_MAT_SIZE/2, mat_mul_iters) << 5; // Uses double co-processor
+		gpio_put(expe_pin, 0);
+		sleep_us((int)(100000*TIME_RATE));
+	}
+	// LoRa benchmarks
+	if(benchmarks_to_run & 0b1000000) {
+		initialise_lora_bench();
+		gpio_put(expe_pin, 1);
+		results |= benchmark_lora_spi(PAYLOAD_LENGTH) << 6; // Uses peripheral (SPI)
 		gpio_put(expe_pin, 0);
 	}
 	sleep_us((int)(1000000*TIME_RATE));

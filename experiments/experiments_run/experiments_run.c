@@ -1,11 +1,12 @@
+#include <pico/stdio.h>
 #include <stdint.h>
 #include <stdio.h>
 #include "experiments.h"
 #include "target_configuration.h"
 
 // Select parameters
-#define PHASE 1
-#define BENCHMARKS_TO_RUN 0b111110
+#define PHASE 0
+#define BENCHMARKS_TO_RUN 0b1000000
 #define PRINT_CONFS_CSV 0
 struct bench_sizes bench_sizes[] = {
 	{.noop = 10, .prime = 5000, .prime_lposc = 200, .mat_mul_iters = 10, .mat_mul_iters_lposc = 1},
@@ -25,6 +26,8 @@ int main() {
 	uint expe_num = watchdog_hw->scratch[1]%nb_expes;
 	char buffer[LINE_SIZE];
 	iteration_init(PHASE, configs[expe_num].vreg_output);
+	stdio_init_all();
+	sleep_ms(1000);
 	
 	uint clk_src_freq = switch_configuration_from_parameter(&configs[expe_num]);
 	

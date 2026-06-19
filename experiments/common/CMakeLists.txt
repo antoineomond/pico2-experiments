@@ -9,6 +9,11 @@ target_link_libraries(experiments
 	hardware_pll
 	hardware_xosc
 	hardware_vreg
+	bme680_pico2
+	bme68x_driver
+	experiments_bis
+	sx1262_wvshre_pico2
+	sx126x_driver
 	pico_multicore
 	pico_rand
 	hardware_sleep

@@ -25,6 +25,34 @@ refs:
 - Grounds must be connected when two different power supplies are used: https://forum.arduino.cc/t/will-spi-work-between-two-systems-with-different-power-supplies/168680
 - What exactly is green LED on BME680: https://forums.adafruit.com/viewtopic.php?t=175379 (last comment)
 
+# extension with LoRa contrib
+Study impact of configurations in the initial paper on time/energy consumption performances when doing I2C/SPI/UART.
+
+## Benchmark
+Read values from BME680 and send them via LoRa receiver.
+
+## Protocol
+- if bme and LoRa hasn't been initialised, initialise of bme and lora and put in scratch register that the devices have been initialised
+- toggle start of experiment
+- read bme680 reading using the custom trigger_bme680_mrsmt function
+- write to the TX LoRa buffer using the sdk sx126x_write_buffer function
+- set the LoRa device in TX mode using the sdk sx126x_set_tx function
+- once the message is sent, the custom dio_gpio_callback callback function is called
+- toggle the end of experiment when entering this callback
+- reset the board
+
+## Parameters
+- Clock source/clock frequency/vreg output (initial paper parameters)
+- Baud rate
+- Protocol:
+    - SPI
+    - I2C
+    - UART
+- payload length to send via the LoRa
+
+## Metrics
+power usage, energie consumption (initial paper metrics)
+
 # meeting 2026-06-04
 - [x] energy consumption summary in table
 - [x] hard to give ccl because parameters are mixed
