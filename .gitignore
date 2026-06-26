@@ -3,6 +3,7 @@ openocd/
 .cache/
 rpi4_mountpoint/
 execute_expe.sh
+execute_expe_adhoc.sh
 
 # latex
 *.aux

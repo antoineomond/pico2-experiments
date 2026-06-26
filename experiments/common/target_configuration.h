@@ -338,7 +338,7 @@ static inline uint set_clock_source_rosc(uint div, uint range, uint freqa, uint 
 	if(divider == 0) {
 		divider = 1;
 	}
-	TIME_RATE = ((float)((float)clk_src_freq/(float)MHZ))/divider; // clk_ref takes clock_freq/MHz as reference to compute time, trimming all remaining KHz. This leads to incorrect time tracking  
+	TIME_RATE = ((float)clk_src_freq/(float)MHZ)/(float)divider; // clk_ref takes clock_freq/MHz as reference to compute time, trimming all remaining KHz. This leads to incorrect time tracking  
 	
 	// Disable unused clock sources
 	pll_deinit(pll_sys);

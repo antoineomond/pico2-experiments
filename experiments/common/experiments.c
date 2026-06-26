@@ -23,7 +23,7 @@
 #include "configuration/apps_utilities.h"
 #include "bme680_pico2.c"
 
-#define NB_BENCHMARKS 6
+#define NB_BENCHMARKS 7
 
 // Benchmark sizes
 #define BENCH_NOOP_SIZE 10
@@ -47,7 +47,7 @@ const uint US = 1000000;
 const uint32_t RESET_VAL = 0xDEADBEEF; 
 
 const int expe_pin = 11;
-float TIME_RATE = 1;
+extern float TIME_RATE;
 
 void iteration_init(uint phase, uint vreg_expe) {
 	sleep_ms(100); // For unknown reason, not sleeping here sometimes makes firmware upload using SWD to fail
