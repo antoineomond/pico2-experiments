@@ -1,0 +1,77 @@
+- [x] investigate which benchmark or combination of benchmarks changes the baseline experiment results  
+    - [x] add benchmark size as a parameter to the experiments (but outside of target configuration)
+    - [x] Run PLL and XOSC with individual benchmarks by varying the size of the benchmark
+    - [x] plot the result according to benchmark size as a facet wrap and see the difference in terms of energy consumption
+- [x] find/re-do ROSC csv mapping up to 300MHz
+- [x] do PLL csv frequency mapping up to 300MHz
+- [x] analyse difference ROSC freq count and ROSC freq expes 
+- [x] plots ROSC 20 to 150MHz at 1.1V
+- [x] plots ROSC 20 to 150MHz at 0.85V
+    - [x] 20 to 110MHz
+    - [x] 120 to 150MHz with larger V
+- [x] plots ROSC 150 to 250MHz with lowest V possible
+- [x] have a table instead of a plot for the energy consumption. The table prints results according to the benchmark
+- [ ] re-write some of the expe setup and result section with the new results
+    - [x] remove noop operation on manuscript
+    - [x] redo figures without the noop operations
+    - [x] correct results in the paper
+        - [x] replace graphs
+        - [x] rewrite texts
+        - [x] reconsider conclusions
+    - [x] include the new experiments in the paper
+- understand why ROSC is advertised as low power
+    - [x] double-check results when disabling plls and xosc
+    - [x] expes with an wo deactivating pll for xosc and rosc
+    
+# expes lora
+- [ ] preliminary check: is the board doing wfe when using sleep_ms or not:
+    - check if the wfe instruction on the pico 2 resumes the execution from the next instruction or from main()
+    - ad-hoc benchmark with sleep_ms(5);
+    - put a print just after the wfe instruction of the sdk and the main
+    - check if there is lots of prints (looping over the instruction)
+    - if it doesn't wfe: understand why it doesn't (check datasheet first, then ask ai for resources)
+    - baseline PLL configuration
+- [ ] compare power usage between wfe and busy wait (if wfe is available, else try the same but with wfi):
+    - bench: (new)
+        - sleep_ms(5); then busy_wait(5) if sleep_ms(5) does wfe
+        - set alarm to 5 seconds then wfe; then busy_wait(5) if sleep_ms(5) doesn't wfe
+    - baseline PLL configuration
+- contributions:
+    - [ ] power consumption with and without spi bus connected
+        - noop benchmark for 10s (either wfe/wfi or busy wait)
+        - 30 iterations each:
+            - 1: with bus physically connected
+            - 2: with bus physically connected but gpios pulled down
+            - 3: with bus physically disconnected (like the first paper)
+        - need to merge the three csvs for the comparison (launch experiments with the correct offset)
+        - baseline PLL configuration
+    - [ ] power consumption when doing an spi workload compared to doing nothing
+        - baseline PLL configuration
+        - reading and printing from bme benchmark (new): sufficient for at least few seconds 
+        - noop for 10s: sufficient for at least few seconds 
+        - 30 iterations
+    - [ ] energy consumption variation for getting n samples from a bme 
+        - reading and printing from bme benchmark (new)
+        - n: 10, 100, 1000
+        - all configurations from first paper except LPOSC
+        - 10 iterations
+    - [ ] impact of the clock frequency on the available baud rate
+        - ad-hoc benchmarks with prints
+        - all configurations from first paper except LPOSC
+        - baud rate: find lowest and highest bound (bme documentation) 
+        - 10 iterations
+    - [ ] energy consumption variation when changing the baud rate
+        - reading and printing from bme benchmark (new)
+        - all configurations from first paper except LPOSC
+        - baud rate (obtained from previous conf)
+        - 10 iterations
+
+# future work
+- [ ] expe comparing results XOSC and ROSC
+- [ ] research designs of PLL and ROSC and understand why ROSC consumes more on high frequencies
+- [ ] understand why sometimes the pll 0.90 15.5MHz is at 14 mW and other times at 22mW
+- [ ] same as above for the XOSC
+- [ ] plot the result for one clock according to type of benchmark and see how the median power consumption changes 
+- [ ] add in the expe setup that the pico2 has test points in the back of the board
+- [ ] design experiments for experimenting ROSC inaccuracy 
+- [ ] understand difference between the setting PLL frequency using the current code, or using the set_sys_clock_khz function 

@@ -302,14 +302,18 @@ void initialise_lora_bench() {
 
 uint8_t benchmark_lora_spi(uint benchmark_size) {
 	uint32_t timeout_ms = 1000;
-	uint32_t measurements[4] = {0x0000, 0x0000, 0x0000, 0x0000};
+	uint32_t measurements[MAX_PAYLOAD_LENGTH] = {0x0000, 0x0000, 0x0000, 0x0000};
 	trigger_bme680_msrmt(measurements);
 	uint8_t offset = 0;
-	uint8_t buffer[PAYLOAD_LENGTH] = {
-		measurements[0], measurements[0] >> 8, measurements[0] >> 16, measurements[0] >> 24,
-	};
+	uint8_t buffer[MAX_PAYLOAD_LENGTH];
+	for (int i = 0; i < MAX_PAYLOAD_LENGTH/4; i+=4) {
+		buffer[i] = measurements[0];
+		buffer[i+1] = measurements[0] >> 8;
+		buffer[i+2] = measurements[0] >> 16;
+		buffer[i+3] = measurements[0] >> 24;
+	}
 	wait_sx1262_busy();
-	sx126x_write_buffer(&sx1262_connection, offset, buffer, PAYLOAD_LENGTH);
+	sx126x_write_buffer(&sx1262_connection, offset, buffer, MAX_PAYLOAD_LENGTH);
 	wait_sx1262_busy();
 	sx126x_set_tx(&sx1262_connection, timeout_ms);
 	while(!tx_done) {};

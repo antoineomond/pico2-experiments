@@ -17,7 +17,7 @@
 #define FREQ_HZ 920000000
 #endif
 #ifndef RX_BUF_ADDRESS
-#define RX_BUF_ADDRESS 0x0F
+#define RX_BUF_ADDRESS 0x00
 #endif
 #ifndef TX_BUF_ADDRESS
 #define TX_BUF_ADDRESS 0x0
