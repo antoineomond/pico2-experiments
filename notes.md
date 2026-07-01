@@ -1,3 +1,49 @@
+# comparison PLL with ROSC at same frequency
+## setting PLL frequencies from 20 to 250MHz
+Setting PLL to a specific frequency can be done using the set_sys_clock_khz provided by the pico-sdk. Before that, I manually deinit then reinit the PLL with a different frequency. This was a more complex process, because the system clock had to be switched from the PLL to the XOSC before turning off the PLL. Additionally, this caused issues with the frequency when frequencies higher then 180MHz had to be reached (see #2026-05-11).
+
+Using this function, experiments were conducted for PLL frequency going up to 250MHz. This didn't have a positive impact on energy consumption (see #2026-05-11).
+
+## setting ROSC freq to the same freqs
+The pico-extras repository provides a function to find the configuration of the rosc for a target frequency. This function is limited to only one parameter and doesn't use the rest of them. Additional code were provided to use all ROSC parameters (drive range, drive strength, divider) + vreg output. This code was used to find all reachable frequencies according to these parameters. First, for 1.1V: results/freq_count/rosc_freqs.csv.
+
+Results showed that there was no energy consumption benefits from doing so (see "results"). Therefore, additional experiments were conducted to find the ROSC frequency with the lowest VREG output. The following csv provides the maximum frequencies attainable for VREG outputs ranging from 0.85V to 1.25V: results/freq_count/max_freq_vreg_rosc/freqs.csv.
+
+Frequencies ranging from 20 to 250MHz while being lower or equal than the associated minimum vreg output must be reached. Because the ROSC is much less accurate than the PLL, a tolerance has been set. This tolerance is set to 3%, meaning that each frequency is set to the target frequency with more or less 3%. Results are provided here: results/freq_count/max_freq_vreg_rosc/max_freq.csv. 
+
+## results
+Results for 1.1V showed that using the ROSC is counter productive and consumes in most cases the same or more than the PLL. When reaching low frequencies, it looks like the energy consumption is better when using the ROSC, but not by a lot. When going at 0.85V, results showed a much more interesting trade-off, with up to 40% less power usage at higher frequencies compared to the PLL.
+
+When reducing the VREG output to the lowest possible for each frequency (with a 3% tolerance in frequency accuracy), ROSC results offer a better energy consumption overall (compare results/experiments_run/pll_range/vco_freq_impact.pdf with results/experiments_run/rosc_range_low_vreg/vco_freq_impact.pdf. This is especially the case for frequencies from 150MHz to 20Mhz.For these frequencies, the using the ROSC allows for a better energy consumption savings compared to using the PLL. Energy consumption savings range from 2 to 34%, corresponding to frequencies from 220MHz to 30MHz. The energy consumption saving at 150MHz is 12%: results/experiments_run/11V_PLL_lowvreg_ROSC.csv. These are the results when setting the VREG output at 1.1V when using the PLL.  
+
+When reducing the VREG output to the lowest attainable while using the PLL, results for the ROSC become much less interesting. Above 110MHz, using the ROSC instead of the PLL increases the energy consumption and power usage. The increase is between 10% (120MHz) to 29% (220MHz). At 110MHz and below, using the ROSC decreases the energy consumption. The energy consumption savings range between 8 (110MHz) to 19% (30MHz).
+
+One surprising result is that at 20MHz, the ROSC uses more power compared to 30MHz (from 15 to 20mW). This is not the case when using the PLL. This leads to a large increase in energy consumption when using the ROSC instead of the PLL for 20MHz (36% increase). 
+
+# rosc freq counting
+At first, the ROSC frequencies got from the execution of benchmark and the ones obtained by the freq count script were different. The issue was because, in the expe code, the PLL was used instead of the XOSC to count the frequencies, with a voltage at 0.85V. Normally, executing computing benchmarks using the PLL for this voltage results in a crash. But to count the frequency it was working. However, the results were always slightly lower than the expected frequency. It is possible that the PLL was working in a degraded way, where it may have missed lots of signal edges when counting the frequency. 
+
+Frequencies obtained for the ROSC have very low standard deviation. For 40 iterations across two manual resets (20 iteration, reset, 20 iterations), the standard deviation was less than 0.1%. Considering our setup and in our context (board, ambient temperature, noises in the environment like wireless communication, computers or so), the ROSC provides a way to have a controllable frequency.  
+
+The ROSC frequencies also vary according to the board itself. Doing frequency count on one board yields different result than from another one. A csv obtained from using one board showed a frequency of 155MHz for a config, while this same config on another board showed 157MHz. Need more experiments to confirm or quantify the variability of the ROSC on different boards.
+
+# expe setup
+Resetting the board using the 3V3 voltage pin is a bad idea. As specified in the forums, doing so can damage the board and make it work incorrectly. This is what happened with the two previous boards. At some point, they produced garbage values or worked at much slower paces. The correct way to reset the board is by shorting the RUN pin low (connect to ground). The expe setup evolved to add wires to short the pin low when the board should be reset. For now, it seems to have fixed the issue. 
+
+# timer in the Pico 2
+sleep_ms calls the [sleep_until](/home/aomond/research/projet_sensor_loic_2025/pico/pico-sdk/src/common/pico_time/time.c) function. In the default Pico 2 conf, this function adds an alarm and loops by acquiring and unlock a spin lock, and tries to wfe in between. The spin lock is acquired by disabling interrupts, to prevent a race condition. Also, a data memory barrier (dmb) is inserted after acquiring the lock. So sleep_ms doesn't actually do a busy wait, it actively tries to wfe until the timer is reached. 
+
+When a timer is created, an entry in an alarm pool is added. This entry contains the target time the alarm should fires and the callback to call when the alarm fires. An alarm is thus just that entry. It doesn't seem to schedule a mecanism to trigger an event or interrupt.
+
+## sleeping from the LPOSC 
+Setting the LPOSC as reference clock impacts the system timers, which cannot produce accurate ticks due to floating, inaccurate and sub-GHz frequency. It should be possible to have a sleep_until equivalent for the LPOSC using the AON timer and interrupt generated from ALARM triggered by this timer:
+- create a time instance that is not based on the system timers
+    - use powman_set_timer, there is no time instance (but then how to handle interrupt service routines)
+- add an alarm on the AON timer that triggers an interrupt at a specific time
+- go into wfe until this alarm triggers
+
+## 
+
 - gp20 -> dio
 - gp8 -> busy
 - gp9 -> reset
@@ -64,38 +110,6 @@ power usage, energie consumption (initial paper metrics)
 - [x] comparison benchs wo noop bench noop (figures paper with figures in wo_noop/)
 - [x] comparison same frequencies PLL and ROSC for different VREGS outputs: 11V_PLL_lowvreg_ROSC_bis.pdf and lowvreg_PLL_lowvreg_ROSC.pdf
 - [x] target pour le papier
-
-# comparison PLL with ROSC at same frequency
-## setting PLL frequencies from 20 to 250MHz
-Setting PLL to a specific frequency can be done using the set_sys_clock_khz provided by the pico-sdk. Before that, I manually deinit then reinit the PLL with a different frequency. This was a more complex process, because the system clock had to be switched from the PLL to the XOSC before turning off the PLL. Additionally, this caused issues with the frequency when frequencies higher then 180MHz had to be reached (see #2026-05-11).
-
-Using this function, experiments were conducted for PLL frequency going up to 250MHz. This didn't have a positive impact on energy consumption (see #2026-05-11).
-
-## setting ROSC freq to the same freqs
-The pico-extras repository provides a function to find the configuration of the rosc for a target frequency. This function is limited to only one parameter and doesn't use the rest of them. Additional code were provided to use all ROSC parameters (drive range, drive strength, divider) + vreg output. This code was used to find all reachable frequencies according to these parameters. First, for 1.1V: results/freq_count/rosc_freqs.csv.
-
-Results showed that there was no energy consumption benefits from doing so (see "results"). Therefore, additional experiments were conducted to find the ROSC frequency with the lowest VREG output. The following csv provides the maximum frequencies attainable for VREG outputs ranging from 0.85V to 1.25V: results/freq_count/max_freq_vreg_rosc/freqs.csv.
-
-Frequencies ranging from 20 to 250MHz while being lower or equal than the associated minimum vreg output must be reached. Because the ROSC is much less accurate than the PLL, a tolerance has been set. This tolerance is set to 3%, meaning that each frequency is set to the target frequency with more or less 3%. Results are provided here: results/freq_count/max_freq_vreg_rosc/max_freq.csv. 
-
-## results
-Results for 1.1V showed that using the ROSC is counter productive and consumes in most cases the same or more than the PLL. When reaching low frequencies, it looks like the energy consumption is better when using the ROSC, but not by a lot. When going at 0.85V, results showed a much more interesting trade-off, with up to 40% less power usage at higher frequencies compared to the PLL.
-
-When reducing the VREG output to the lowest possible for each frequency (with a 3% tolerance in frequency accuracy), ROSC results offer a better energy consumption overall (compare results/experiments_run/pll_range/vco_freq_impact.pdf with results/experiments_run/rosc_range_low_vreg/vco_freq_impact.pdf. This is especially the case for frequencies from 150MHz to 20Mhz.For these frequencies, the using the ROSC allows for a better energy consumption savings compared to using the PLL. Energy consumption savings range from 2 to 34%, corresponding to frequencies from 220MHz to 30MHz. The energy consumption saving at 150MHz is 12%: results/experiments_run/11V_PLL_lowvreg_ROSC.csv. These are the results when setting the VREG output at 1.1V when using the PLL.  
-
-When reducing the VREG output to the lowest attainable while using the PLL, results for the ROSC become much less interesting. Above 110MHz, using the ROSC instead of the PLL increases the energy consumption and power usage. The increase is between 10% (120MHz) to 29% (220MHz). At 110MHz and below, using the ROSC decreases the energy consumption. The energy consumption savings range between 8 (110MHz) to 19% (30MHz).
-
-One surprising result is that at 20MHz, the ROSC uses more power compared to 30MHz (from 15 to 20mW). This is not the case when using the PLL. This leads to a large increase in energy consumption when using the ROSC instead of the PLL for 20MHz (36% increase). 
-
-# rosc freq counting
-At first, the ROSC frequencies got from the execution of benchmark and the ones obtained by the freq count script were different. The issue was because, in the expe code, the PLL was used instead of the XOSC to count the frequencies, with a voltage at 0.85V. Normally, executing computing benchmarks using the PLL for this voltage results in a crash. But to count the frequency it was working. However, the results were always slightly lower than the expected frequency. It is possible that the PLL was working in a degraded way, where it may have missed lots of signal edges when counting the frequency. 
-
-Frequencies obtained for the ROSC have very low standard deviation. For 40 iterations across two manual resets (20 iteration, reset, 20 iterations), the standard deviation was less than 0.1%. Considering our setup and in our context (board, ambient temperature, noises in the environment like wireless communication, computers or so), the ROSC provides a way to have a controllable frequency.  
-
-The ROSC frequencies also vary according to the board itself. Doing frequency count on one board yields different result than from another one. A csv obtained from using one board showed a frequency of 155MHz for a config, while this same config on another board showed 157MHz. Need more experiments to confirm or quantify the variability of the ROSC on different boards.
-
-# expe setup
-Resetting the board using the 3V3 voltage pin is a bad idea. As specified in the forums, doing so can damage the board and make it work incorrectly. This is what happened with the two previous boards. At some point, they produced garbage values or worked at much slower paces. The correct way to reset the board is by shorting the RUN pin low (connect to ground). The expe setup evolved to add wires to short the pin low when the board should be reset. For now, it seems to have fixed the issue. 
 
 # 2026-05-11
 - The VCO frequency has a low impact on energy consumption: results/experiments_run/vco_freq_impact/vco_freq_impact.pdf: less than 10% decrease in both cases (2.7% and 7.9%).

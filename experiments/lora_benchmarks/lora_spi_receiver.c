@@ -60,20 +60,22 @@ void led_blink(int count) {
 	}
 }
 
+volatile uint32_t nb_msg_received = 0;
 void dio_gpio_callback(uint gpio, uint32_t events)
 {
+	led_blink(1);
 	if (gpio == 20 && events == 8) {
 		//new_t = get_absolute_time();
 		//new_ms = to_ms_since_boot(new_t);
 		//printf("received msg in %lldms\n", new_ms - ms);
 		//t = get_absolute_time();
 		//ms = to_ms_since_boot(t);
-	led_blink(1);
 		gpio_acknowledge_irq(gpio, irq_mask);
 		sx126x_get_and_clear_irq_status(&sx1262_connection, &irq_mask);
-		//print_irq_to_str(irq_mask);
+		print_irq_to_str(irq_mask);
 		if(irq_mask & (1 << 1)) { // RxDone
 			received_msg = true;
+			nb_msg_received += 1;
 		}
 	}
 }
@@ -124,21 +126,13 @@ void leverage_clock_source_lposc() {
 }
 
 int main() {
-	gpio_init(PICO_DEFAULT_LED_PIN);
-	gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-	t = get_absolute_time();
-	ms = to_ms_since_boot(t);
-	//stdio_init_all();
-	sleep_ms(500);
-	leverage_clock_source_lposc();
-	vreg_set_voltage(9);
-	
-	pico2_spi_init_default(921600);
-	//printf("Receiver node\n");
+	stdio_init_all();
+	sleep_ms(1000);
+	pico2_spi_init_default(115200);
 	sx1262_pico2_init(&dio_gpio_callback);
 	sx1262_lora_init(&sx1262_connection, irq_mask);
 	wait_sx1262_busy();
-	sx126x_set_rx(&sx1262_connection, timeout_ms);
+	SX1262_GET_STATUS(sx126x_set_rx(&sx1262_connection, timeout_ms), "set_rx");
 	sx126x_rx_buffer_status_t* rx_buffer_status = malloc(sizeof(sx126x_rx_buffer_status_t));
 	//sleep_ms(500);
 	//leverage_clock_source_lposc();
@@ -148,14 +142,23 @@ int main() {
 		if(received_msg) {
 			sx126x_get_rx_buffer_status(&sx1262_connection, rx_buffer_status);
 			uint8_t read_buffer[rx_buffer_status->pld_len_in_bytes];
-			sx126x_read_buffer(&sx1262_connection, rx_buffer_status->buffer_start_pointer, read_buffer, rx_buffer_status->pld_len_in_bytes);
-			temperature = read_buffer[0] | (read_buffer[1] << 8) | (read_buffer[2] << 16) | (read_buffer[3] << 24);
-			printf("Temp. = %.2fC\n", temperature / 100.0);
+			//printf("rx_buffer_status->pld_len_in_bytes,%d\n", rx_buffer_status->pld_len_in_bytes);
+			//printf("rx_buffer_status->buffer_start_pointer,%d\n", rx_buffer_status->buffer_start_pointer);
+			for (int i = 0; i < MAX_PAYLOAD_LENGTH/4; i+=4) {
+				sx126x_read_buffer(&sx1262_connection, i, read_buffer, rx_buffer_status->pld_len_in_bytes);
+				temperature = read_buffer[0] | (read_buffer[1] << 8) | (read_buffer[2] << 16) | (read_buffer[3] << 24);
+				printf("%.2f,", temperature / 100.0);
+			}
+			printf("\n");
+			//temperature = read_buffer[0] | (read_buffer[1] << 8) | (read_buffer[2] << 16) | (read_buffer[3] << 24);
+			//printf("%.2f,%d\n", temperature / 100.0, nb_msg_received);
+			//printf("Temp. = %.2fC, msg_received: %d\n", temperature / 100.0, nb_msg_received);
 
 			sx126x_set_rx(&sx1262_connection, timeout_ms);
 			received_msg = false;
 		}
 		sleep_us((int)(TIME_RATE*10000));
+		//printf("waiting\n");
 	}
 	return 0;
 }

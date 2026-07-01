@@ -21,13 +21,56 @@
     - [x] include the new experiments in the paper
 - understand why ROSC is advertised as low power
     - [x] double-check results when disabling plls and xosc
-    - [ ] expes with an wo deactivating pll for xosc and rosc
-    - [ ] expe comparing results XOSC and ROSC
-    - [ ] research designs of PLL and ROSC and understand why ROSC consumes more on high frequencies
+    - [x] expes with an wo deactivating pll for xosc and rosc
+    
+# expes lora
+- [ ] preliminary check: is the board doing wfe when using sleep_ms or not:
+    - check if the wfe instruction on the pico 2 resumes the execution from the next instruction or from main()
+    - ad-hoc benchmark with sleep_ms(5);
+    - put a print just after the wfe instruction of the sdk and the main
+    - check if there is lots of prints (looping over the instruction)
+    - if it doesn't wfe: understand why it doesn't (check datasheet first, then ask ai for resources)
+    - baseline PLL configuration
+- [ ] compare power usage between wfe and busy wait (if wfe is available, else try the same but with wfi):
+    - bench: (new)
+        - sleep_ms(5); then busy_wait(5) if sleep_ms(5) does wfe
+        - set alarm to 5 seconds then wfe; then busy_wait(5) if sleep_ms(5) doesn't wfe
+    - baseline PLL configuration
+- contributions:
+    - [ ] power consumption with and without spi bus connected
+        - noop benchmark for 10s (either wfe/wfi or busy wait)
+        - 30 iterations each:
+            - 1: with bus physically connected
+            - 2: with bus physically connected but gpios pulled down
+            - 3: with bus physically disconnected (like the first paper)
+        - need to merge the three csvs for the comparison (launch experiments with the correct offset)
+        - baseline PLL configuration
+    - [ ] power consumption when doing an spi workload compared to doing nothing
+        - baseline PLL configuration
+        - reading and printing from bme benchmark (new): sufficient for at least few seconds 
+        - noop for 10s: sufficient for at least few seconds 
+        - 30 iterations
+    - [ ] energy consumption variation for getting n samples from a bme 
+        - reading and printing from bme benchmark (new)
+        - n: 10, 100, 1000
+        - all configurations from first paper except LPOSC
+        - 10 iterations
+    - [ ] impact of the clock frequency on the available baud rate
+        - ad-hoc benchmarks with prints
+        - all configurations from first paper except LPOSC
+        - baud rate: find lowest and highest bound (bme documentation) 
+        - 10 iterations
+    - [ ] energy consumption variation when changing the baud rate
+        - reading and printing from bme benchmark (new)
+        - all configurations from first paper except LPOSC
+        - baud rate (obtained from previous conf)
+        - 10 iterations
 
+# future work
+- [ ] expe comparing results XOSC and ROSC
+- [ ] research designs of PLL and ROSC and understand why ROSC consumes more on high frequencies
 - [ ] understand why sometimes the pll 0.90 15.5MHz is at 14 mW and other times at 22mW
 - [ ] same as above for the XOSC
-- [ ] quantify the variability of the ROSC frequency according to the board (need at least 5 boards)
 - [ ] plot the result for one clock according to type of benchmark and see how the median power consumption changes 
 - [ ] add in the expe setup that the pico2 has test points in the back of the board
 - [ ] design experiments for experimenting ROSC inaccuracy 
