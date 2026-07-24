@@ -4,6 +4,9 @@
 #include "experiments.h"
 #include "target_configuration.h"
 #include "hardware/structs/usb.h"
+#include "pico/time.h"
+#include "pico/sync.h"
+#include "hardware/timer.h"
 
 const int expe_pin = 11;
 void pull_down_gpios() {
@@ -41,21 +44,73 @@ static void disable_usb() {
         USB_USBPHY_DIRECT_OVERRIDE_DM_PULLUP_HISEL_OVERRIDE_EN_BITS | USB_USBPHY_DIRECT_OVERRIDE_DP_PULLUP_HISEL_OVERRIDE_EN_BITS;
 }
 
-int main() {
-	struct config c = {LPOSC, 0, 0, 0, 0, 0, 0, 0, 0x20, VREG_VOLTAGE_1_10, true};
-	vreg_disable_voltage_limit();
-	powman_clear_bits(&powman_hw->bod, 0x000001f1);
-	turn_off_clocks();
-	disable_usb();
-	pull_down_gpios();
-	uint clk_src_freq = switch_configuration_from_parameter(&c);
-	
-	//pll_init(pll_sys, PLL_SYS_REFDIV, PLL_SYS_VCO_FREQ_HZ, PLL_SYS_POSTDIV1, PLL_SYS_POSTDIV2);
-	//pll_init(pll_usb, PLL_USB_REFDIV, PLL_USB_VCO_FREQ_HZ, PLL_USB_POSTDIV1, PLL_USB_POSTDIV2);
-	//xosc_init();
-	//rosc_enable();
-	while(true) {
-		sleep_ms(1000);
+uint compute_primes_local(uint start, uint end) {
+	volatile uint cpt = 0;
+	uint is_prime = 1;
+	for (int k = start; k < end; k++) {
+		is_prime = 1;
+		for (int i = 2; i	< k; i++) {
+			if (k%i==0) {
+				is_prime = 0;
+			}	
+		}
+		if(is_prime == 1) {
+			cpt += 1;
+		}
 	}
+	return cpt;
+}
+
+void timer_busy() {
+	timer_hw_t *timer = PICO_DEFAULT_TIMER_INSTANCE();
+	absolute_time_t t = make_timeout_time_us(100*1000000);
+	uint64_t target = to_us_since_boot(t);
+	uint32_t hi_target = (uint32_t)(target >> 32u);
+	uint32_t hi = timer->timerawh;
+	while(hi < hi_target) {
+		hi = timer->timerawh;
+		tight_loop_contents();
+	}
+}
+
+void busy() {
+	while(true) {};
+}
+
+int main() {
+	gpio_init(expe_pin);
+	gpio_set_dir(expe_pin, GPIO_OUT);
+	while(true) {
+		gpio_put(expe_pin, 1);
+		compute_primes_local(0, 25000);
+		gpio_put(expe_pin, 0);
+		sleep_ms(100);
+	}
+	//gpio_init(expe_pin);
+	//gpio_set_dir(expe_pin, GPIO_OUT);
+	//gpio_put(expe_pin, 1);
+	//while(true) {
+	//	//sleep_ms(10000);
+	//}
+	
+	//absolute_time_t t = make_timeout_time_us(1000000 - PICO_TIME_SLEEP_OVERHEAD_ADJUST_US);
+	//sync_internal_yield_until_before(t);
+	//busy_wait_until(t);
+	//printf("main()\n");
+	//__sev();
+	//__wfe();
+	//
+	//sleep_ms(3000);
+
+	////pll_init(pll_sys, PLL_SYS_REFDIV, PLL_SYS_VCO_FREQ_HZ, PLL_SYS_POSTDIV1, PLL_SYS_POSTDIV2);
+	////pll_init(pll_usb, PLL_USB_REFDIV, PLL_USB_VCO_FREQ_HZ, PLL_USB_POSTDIV1, PLL_USB_POSTDIV2);
+	////xosc_init();
+	////rosc_enable();
+	//while(true) {
+	//	absolute_time_t t = make_timeout_time_us(1000000 - PICO_TIME_SLEEP_OVERHEAD_ADJUST_US);
+	//	sync_internal_yield_until_before(t);
+	//	busy_wait_until(t);
+	//	printf("in while loop\n");
+	//}
 }
 

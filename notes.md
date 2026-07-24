@@ -1,3 +1,12 @@
+# add power usage when doing noop without checking for a timer
+Doing experiments 3 weeks after having done a break yield different results. For instance, doing the prime computation results in a median power usage of 84mW over 5 iterations, compared to the 72mW obtained 3 weeks before. This explanation may reside in:
+- severe temperature changes altering the device
+- high humidity altering the device
+- floating electric signal in the ground or gpios of the pico 2 from the monitoring node or the serial gpios, which altered the device
+- inherent variability of the pico 2 when the device is left without power for prolonged periods
+- modification of the setup by the person in charge of the cleaning of the room, damaging the device 
+Regardless of the explanation, it means results must be considered as relative to a baseline, not absolute.
+
 # power usage comparison between using busy wait (noop) and using wfe plus alarm
 In the current master branch (dated 03.07.26), there is a bug in sleep_ms preventing the board from doing wfe due to the event flag not being cleared (https://github.com/raspberrypi/pico-sdk/issues/3052). This can be fixed by using the hardware spin lock instead of the software implementation. When using the hardware implementation, the board wfe as expected. When using the software implementation, the board loops trying to wfe and doing spin_unlock. It is not exactly noop, but it is still busy doing stuff. To use the hardware lock, the  PICO_USE_SW_SPIN_LOCKS variable in spin_lock.h must be set to 0.
 
@@ -19,7 +28,7 @@ Using spin loop (initial sdk code) results in a more even power usage in and bet
 The event flag is a single bit that is set to 1, and consumed by the wfe call. Meaning that regardless of the instruction setting the flag, the flag is either set or unchanged (e.g., printf sets the flag). It looks like the software spinlock causes the event flag to be set (https://github.com/raspberrypi/pico-sdk/issues/1812, apparently it is to respect the arm-v8 standard). In the sleep_ms implem, the event flag is never cleared. So when doing wfe at spin_lock_blocking instruction, the wfe returns immediately. However, even when using the hardware lock (setting PICO_USE_SW_SPIN_LOCKS to 0), the wfe still returns immediately. It has to do with the add_alarm_at function that triggers an IRQ with ta_force_irq.
 
 ## ccl
-- the latest release at the time of the issue was 29.07.25. The new release was 03.07.26,
+- the latest release at the time of the issue was 29.07.25. On this release, the board didn't do wfe, but did an active wait due to a bug in the pico-sdk. The new release on the 03.07.26 fixes this bug.
 
 # comparison PLL with ROSC at same frequency
 ## setting PLL frequencies from 20 to 250MHz
