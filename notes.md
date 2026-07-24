@@ -14,8 +14,12 @@ Using spin loop (initial sdk code) results in a more even power usage in and bet
 - The power usage and its disperation can vary greatly depending on the type of instruction executed. Performing prime computation consumes less power than save/disabling interrupts then locking a spin lock. Performing prime computation consumes more than doing noops while fetching the value of a timer from memory. Performing noop while fetching the value causes a much more erratic and dispersed power traces. The latter is strange. As far as I remember, the power usage due to the matrix multiplication workload was much more consistent and less dispersed.
 - Using wfe can reduce power usage compared to active wait 
 
-# debugging wfe
+# preliminary check: is the board doing wfe when using sleep_ms or not
+## debugging wfe
 The event flag is a single bit that is set to 1, and consumed by the wfe call. Meaning that regardless of the instruction setting the flag, the flag is either set or unchanged (e.g., printf sets the flag). It looks like the software spinlock causes the event flag to be set (https://github.com/raspberrypi/pico-sdk/issues/1812, apparently it is to respect the arm-v8 standard). In the sleep_ms implem, the event flag is never cleared. So when doing wfe at spin_lock_blocking instruction, the wfe returns immediately. However, even when using the hardware lock (setting PICO_USE_SW_SPIN_LOCKS to 0), the wfe still returns immediately. It has to do with the add_alarm_at function that triggers an IRQ with ta_force_irq.
+
+## ccl
+- the latest release at the time of the issue was 29.07.25. The new release was 03.07.26,
 
 # comparison PLL with ROSC at same frequency
 ## setting PLL frequencies from 20 to 250MHz
