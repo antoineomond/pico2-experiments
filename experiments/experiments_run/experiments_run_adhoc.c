@@ -62,15 +62,7 @@ uint compute_primes_local(uint start, uint end) {
 }
 
 void timer_busy() {
-	timer_hw_t *timer = PICO_DEFAULT_TIMER_INSTANCE();
-	absolute_time_t t = make_timeout_time_us(100*1000000);
-	uint64_t target = to_us_since_boot(t);
-	uint32_t hi_target = (uint32_t)(target >> 32u);
-	uint32_t hi = timer->timerawh;
-	while(hi < hi_target) {
-		hi = timer->timerawh;
-		tight_loop_contents();
-	}
+	timer_busy_wait_until(PICO_DEFAULT_TIMER_INSTANCE(), make_timeout_time_us(10000000));
 }
 
 void busy() {
@@ -83,6 +75,16 @@ int main() {
 	while(true) {
 		gpio_put(expe_pin, 1);
 		compute_primes_local(0, 25000);
+		gpio_put(expe_pin, 0);
+		sleep_ms(100);
+		
+		gpio_put(expe_pin, 1);
+		timer_busy();
+		gpio_put(expe_pin, 0);
+		sleep_ms(100);
+		
+		gpio_put(expe_pin, 1);
+		sleep_ms(10000);
 		gpio_put(expe_pin, 0);
 		sleep_ms(100);
 	}

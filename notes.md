@@ -1,10 +1,10 @@
 # add power usage when doing noop without checking for a timer
 Doing experiments 3 weeks after having done a break yield different results. For instance, doing the prime computation results in a median power usage of 84mW over 5 iterations, compared to the 72mW obtained 3 weeks before. This explanation may reside in:
-- severe temperature changes altering the device
-- high humidity altering the device
-- floating electric signal in the ground or gpios of the pico 2 from the monitoring node or the serial gpios, which altered the device
-- inherent variability of the pico 2 when the device is left without power for prolonged periods
+- leaving the device unplugged for prolonged period
 - modification of the setup by the person in charge of the cleaning of the room, damaging the device 
+- temperature changes altering the device
+- humidity altering the device
+- floating electric signal in the ground or gpios of the pico 2 from the monitoring node or the serial gpios, which altered the device
 Regardless of the explanation, it means results must be considered as relative to a baseline, not absolute.
 
 # power usage comparison between using busy wait (noop) and using wfe plus alarm

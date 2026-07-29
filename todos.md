@@ -15,7 +15,6 @@
     - bench: while(true); 
     - baseline PLL configuration
     - add a deadline of 10 seconds on the monitoring node
-- [ ] script to launch all experiments and gather results in one file
 - contributions:
     - [ ] power consumption with and without spi bus connected
         - noop benchmark for 10s (either wfe/wfi or busy wait)
