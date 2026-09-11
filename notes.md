@@ -1,3 +1,33 @@
+# experiments where the reference clock is not replaced
+- wip: the expes doesn't go further than the second conf
+
+# pulling v2.3.0 of pico-sdk and pico-extras
+1st paper expe commits
+- pico-sdk commit (v2.2.0): a1438df
+- pico-extras: eb071cd88a8d7f6227ae55413e773454d1455168
+
+# communicate and propose a fix to the issue of lposc as dormant source on github
+## problem
+- the aon_timer_start the clock source is always xosc. When xosc is disabled, this makes the code execution to fail. There is another function to set the clock source as lposc
+
+## expected
+- if the clock ref is lposc, use the lposc version. Else use the xosc
+- it is possible to check the clock ref in usage by checking the CLK_REF_SELECTED register (12.10.5.3 datasheet)
+
+- issue on gh: title "Selection of the lposc timer source as aon_timer_source when xosc is not the reference clock". Text: "In some experiments using the aon timer, I used the ROSC and LPOSC instead of the XOSC as reference clock. It looks like the `aon_timer_start` only accepts XOSC as a reference clock. The datasheet (12.10.5) mentions the possibility to use the LPOSC as reference clock for the timer instead of the XOSC (implemented in function. "
+
+# errors I did in the experiments
+- not re-checking every step of the expe (had wrong code for noop wait)
+- not saved the experiment even if it was exploratory
+- difficult experimental setup to navigate and to reproduce
+- when doing the experiment design in the todos, always put:
+    - the explanation of why this experiment is important
+    - the expected result
+
+# launch the experiments from 1st paper on the pi and compare results
+- Difference of 3mW max from paper expes for PLL (73mW actual, 70mW paper). Can be attributed to the fact that a different board is used 
+- For XOSC and ROSC, difference of 1mW (but sometimes it is +1mW, sometimes -1mW)
+
 # add power usage when doing noop without checking for a timer
 Doing experiments 3 weeks after having done a break yield different results. For instance, doing the prime computation results in a median power usage of 84mW over 5 iterations, compared to the 72mW obtained 3 weeks before. This explanation may reside in:
 - leaving the device unplugged for prolonged period

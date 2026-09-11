@@ -1,7 +1,7 @@
 #add_subdirectory(benchmarks)
 #add_subdirectory(sleep)
 #add_subdirectory(pairs_freqs)
-add_subdirectory(freq_count)
+#add_subdirectory(freq_count)
 add_subdirectory(common)
 #add_subdirectory(gating)
 add_subdirectory(experiments_run)

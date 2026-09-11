@@ -6,7 +6,7 @@
 
 // Select parameters
 #define PHASE 1
-#define BENCHMARKS_TO_RUN 0b1000000
+#define BENCHMARKS_TO_RUN 0b0111110
 #define PRINT_CONFS_CSV 0
 struct bench_sizes bench_sizes[] = {
 	{.noop = 10, .prime = 5000, .prime_lposc = 200, .mat_mul_iters = 10, .mat_mul_iters_lposc = 1},
